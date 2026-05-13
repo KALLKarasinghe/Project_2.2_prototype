@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { SystemProvider, useSystemStore } from './SystemContext';
 import Home from './Home';
 import AdminDashboard from './AdminDashboard';
-import PharmacyDashboard from './PharmacyDashboard';
 import Auth from './Auth';
 import AdminLogin from './AdminLogin';
 
@@ -16,6 +15,7 @@ import Products from './Products';
 import SuppliersList from './SuppliersList';
 import About from './About';
 import SpecialMedicine from './SpecialMedicine';
+import MyOrders from './MyOrders';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -30,10 +30,10 @@ function App() {
             <Route path="/suppliers" element={<SuppliersList />} />
             <Route path="/about" element={<About />} />
             <Route path="/special-medicine" element={<SpecialMedicine />} />
+            <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/pharmacy" element={<ProtectedRoute><PharmacyDashboard /></ProtectedRoute>} />
             <Route path="/supplier" element={<ProtectedRoute><SupplierDashboard /></ProtectedRoute>} />
             <Route path="/agent" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
             <Route path="/customer" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />

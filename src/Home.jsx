@@ -1,10 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSystemStore } from './SystemContext';
+import CartSidebar from './CartSidebar';
+import Navbar from './Navbar';
+import toast from 'react-hot-toast';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { medicines, currentUser, addReview } = useSystemStore();
+  const { medicines, currentUser, addReview, addToCart, cart } = useSystemStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedBrands, setSelectedBrands] = useState([]);
@@ -177,57 +180,8 @@ const Home = () => {
         </div>
       )}
 
-      {/* Header & Navigation */}
-      <header className="bg-white sticky top-0 z-40 border-b border-slate-100 shadow-sm">
-        {/* Top bar */}
-        <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-2 px-6 flex justify-between items-center text-xs sm:text-sm font-medium tracking-wide">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-              +9470 345 7402
-            </span>
-            <span className="hidden sm:flex items-center gap-1 text-blue-200">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-              support@globalmedicine.com
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to="/special-medicine" className="hover:text-blue-200 cursor-pointer transition-colors">Special Medicine</Link>
-            <span className="opacity-40">|</span>
-            <span className="hover:text-blue-200 cursor-pointer transition-colors">Help Center</span>
-          </div>
-        </div>
-
-        {/* Main Logo and Navigation */}
-        <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <Link to="/" className="flex items-center cursor-pointer">
-            <img
-              src={`${import.meta.env.BASE_URL}logo.png`}
-              alt="Global Medicine Logo"
-              className="h-14 md:h-16 w-auto object-contain"
-            />
-            <div className="flex flex-col ml-3 leading-tight">
-              <span className="font-extrabold text-2xl md:text-3xl text-blue-900 tracking-tight">Global Medicine</span>
-              <span className="font-semibold text-[10px] md:text-xs text-gray-500 tracking-widest uppercase mt-0.5">Healthcare Supply Chain</span>
-            </div>
-          </Link>
-
-          <div className="flex gap-6 items-center">
-            <nav className="hidden md:flex gap-6 items-center font-medium text-slate-600">
-              <Link to="/" className="hover:text-blue-600 transition-colors">Home</Link>
-              <Link to="/products" className="hover:text-blue-600 transition-colors">Products</Link>
-              <Link to="/suppliers" className="hover:text-blue-600 transition-colors">Suppliers</Link>
-              <Link to="/about" className="hover:text-blue-600 transition-colors">About Us</Link>
-            </nav>
-            <button 
-              onClick={() => navigate('/login')}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-md shadow-blue-500/20 transition-all active:scale-95"
-            >
-              Sign In / Register
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* Shared Navbar */}
+      <Navbar />
 
       {/* Hero Section & Search */}
       <section className="relative pt-24 pb-12 overflow-hidden flex-grow flex flex-col justify-end min-h-[500px] sm:min-h-[600px] w-full border-b border-slate-200">
@@ -325,7 +279,10 @@ const Home = () => {
                 <h4 className="font-bold text-slate-800 text-lg mb-4 group-hover:text-blue-600 transition-colors">{item.name}</h4>
                 <div className="flex justify-between items-center mt-auto">
                   <p className="font-extrabold text-xl text-slate-900">Rs. {item.price}</p>
-                  <button className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart({id: `new-${item.id}`, name: item.name, brand: item.brand, price: parseFloat(item.price)}, 1); toast.success(`${item.name} added to cart`); }}
+                    className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors"
+                  >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
                   </button>
                 </div>
@@ -509,16 +466,18 @@ const Home = () => {
             
             <div className="p-6 sm:p-8 pt-4 border-t border-slate-100 bg-white flex-shrink-0">
               <button 
-                onClick={() => { alert('Added to cart!'); setSelectedMedicine(null); }}
+                onClick={() => { addToCart(selectedMedicine, 1); toast.success(`${selectedMedicine.name} added to cart`); setSelectedMedicine(null); }}
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-slate-900/20 transition-all hover:shadow-slate-800/30 active:scale-95 flex justify-center items-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                Add to Order List
+                Add to Cart
               </button>
             </div>
           </div>
         </div>
       )}
+      {/* Cart Sidebar */}
+      <CartSidebar />
     </div>
   );
 };

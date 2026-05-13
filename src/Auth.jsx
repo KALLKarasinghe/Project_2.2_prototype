@@ -22,23 +22,22 @@ const Auth = () => {
   const [loginErrors, setLoginErrors] = useState({});
   const [regErrors, setRegErrors] = useState({});
 
-  const handleSignIn = (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
     const errs = {};
     if (!loginEmail.trim()) errs.loginEmail = 'Email is required.';
     if (!loginPassword) errs.loginPassword = 'Password is required.';
-    if (!loginRole) errs.loginRole = 'Please select your portal role.';
     if (Object.keys(errs).length) { setLoginErrors(errs); return; }
     setLoginErrors({});
 
-    loginUser({ role: loginRole, email: loginEmail, name: loginEmail.split('@')[0] });
-    toast.success(`Welcome! Redirecting to your ${loginRole} portal...`);
-
-    switch (loginRole) {
-      case 'Pharmacy': navigate('/pharmacy'); break;
-      case 'Supplier': navigate('/supplier'); break;
-      case 'Medical Agent': navigate('/agent'); break;
-      default: break;
+    try {
+      const data = await loginUser({ email: loginEmail, password: loginPassword });
+      if (data.success) {
+        toast.success(`Welcome, ${data.user.name}! You are now signed in.`);
+        navigate('/');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Login failed. Please check your credentials.');
     }
   };
 

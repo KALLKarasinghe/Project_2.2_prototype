@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { users, loginUser } = useSystemStore();
+  const { loginUser } = useSystemStore();
   const [adminUsername, setAdminUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
@@ -18,20 +18,22 @@ const AdminLogin = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleAdminSignIn = (e) => {
+  const handleAdminSignIn = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
-    const matchedUser = users.find(
-      user => user.name === adminUsername && user.password === password && user.role === 'Admin'
-    );
-
-    if (matchedUser) {
-      loginUser(matchedUser);
-      toast.success(`Welcome back, ${matchedUser.name}!`);
-      navigate('/admin');
-    } else {
-      toast.error('Invalid Admin Credentials. Please verify your details.');
+    try {
+      const data = await loginUser({ name: adminUsername, password: password });
+      if (data.success) {
+        if (data.user.role !== 'Admin') {
+          toast.error('This portal is restricted to Administrators only.');
+          return;
+        }
+        toast.success(`Welcome back, ${data.user.name}!`);
+        navigate('/admin');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Invalid Admin Credentials. Please verify your details.');
     }
   };
 
