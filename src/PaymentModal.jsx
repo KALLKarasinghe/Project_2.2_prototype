@@ -8,10 +8,31 @@ const PaymentModal = ({ total, onClose }) => {
   const { clearCart, cart, placeOrder, currentUser } = useSystemStore();
   const navigate = useNavigate();
 
+  // Cache the initial total so it doesn't drop to 0 when clearCart() fires
+  const [finalAmount] = useState(total);
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [orderId] = useState(() => 'GM-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase());
+  const [hasPremium, setHasPremium] = useState(false);
+
+  React.useEffect(() => {
+    if (currentUser) {
+      const checkSub = async () => {
+        try {
+          const res = await fetch(`http://localhost/pharma_backend/api/subscription.php?user_id=${currentUser.id}`);
+          const data = await res.json();
+          if (data.success && data.data?.status === 'Active') {
+            setHasPremium(true);
+          }
+        } catch (err) {}
+      };
+      checkSub();
+    }
+  }, [currentUser]);
+
+  const discount = hasPremium ? finalAmount * 0.005 : 0;
+  const grandTotal = finalAmount - discount;
 
   // Buyer details from logged-in user or defaults
   const buyerName  = currentUser?.name || 'Guest';
@@ -23,8 +44,8 @@ const PaymentModal = ({ total, onClose }) => {
     setProcessing(true);
     setError('');
 
-    // Ensure strict 2 decimal formatting (e.g., "10.00")
-    const formattedAmount = Number(total).toFixed(2);
+    // Ensure strict 2 decimal formatting
+    const formattedAmount = Number(grandTotal).toFixed(2);
 
     try {
       // Step 1: Fetch hash from PHP backend
@@ -43,10 +64,7 @@ const PaymentModal = ({ total, onClose }) => {
         throw new Error('Failed to generate payment hash.');
       }
 
-      // Step 2: Place orders in our DB first (status: Pending)
-      for (const item of cart) {
-        await placeOrder({ id: item.id }, item.quantity);
-      }
+      // Step 2 has been moved to the onCompleted callback so DB saves only after payment success
 
       // Step 3: Configure PayHere payment object
       const payment = {
@@ -70,11 +88,28 @@ const PaymentModal = ({ total, onClose }) => {
       };
 
       // Step 4: Set up PayHere callbacks
-      window.payhere.onCompleted = function onCompleted(completedOrderId) {
+      window.payhere.onCompleted = async function onCompleted(completedOrderId) {
         console.log('PayHere payment completed. Order ID:', completedOrderId);
-        clearCart();
-        setProcessing(false);
-        setSuccess(true);
+        try {
+          // Trigger the checkout API to convert cart items to real orders
+          const checkoutRes = await fetch('http://localhost/pharma_backend/api/checkout.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: currentUser.id, transaction_id: completedOrderId })
+          });
+          const data = await checkoutRes.json();
+          if (data.success) {
+            clearCart();
+            setSuccess(true);
+          } else {
+            setError(data.error || 'Payment succeeded but order creation failed.');
+          }
+        } catch (err) {
+          console.error('Checkout API error:', err);
+          setError('Payment succeeded but database error occurred.');
+        } finally {
+          setProcessing(false);
+        }
       };
 
       window.payhere.onDismissed = function onDismissed() {
@@ -132,8 +167,8 @@ const PaymentModal = ({ total, onClose }) => {
 
             <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100 mb-8">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-semibold text-emerald-800">Amount Paid</span>
-                <span className="text-lg font-black text-emerald-700">Rs. {total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <span className="text-sm font-semibold text-emerald-800">Amount Paid {hasPremium && '(Premium)'}</span>
+                <span className="text-lg font-black text-emerald-700">Rs. {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
 
@@ -192,10 +227,27 @@ const PaymentModal = ({ total, onClose }) => {
               </div>
 
               {/* Total */}
-              <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100 mb-5">
-                <div className="flex justify-between items-center">
+              <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100 mb-5 relative overflow-hidden">
+                {hasPremium && (
+                  <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-bl-xl shadow-sm">
+                    Premium Member: 0.5% Off
+                  </div>
+                )}
+                <div className="space-y-2 mb-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-blue-800 font-medium">Subtotal</span>
+                    <span className="text-blue-900 font-bold">Rs. {finalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  {hasPremium && (
+                    <div className="flex justify-between items-center text-sm text-emerald-600">
+                      <span className="font-semibold">Premium Discount (0.5%)</span>
+                      <span className="font-bold">- Rs. {discount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-between items-center pt-3 border-t border-blue-200/50">
                   <span className="text-sm font-bold text-blue-800">Total Amount</span>
-                  <span className="text-2xl font-black text-blue-900">Rs. {total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  <span className="text-2xl font-black text-blue-900">Rs. {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <p className="text-xs text-blue-600 mt-1 font-medium">Currency: LKR · Order: {orderId}</p>
               </div>
@@ -244,7 +296,7 @@ const PaymentModal = ({ total, onClose }) => {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    Pay with PayHere · Rs. {total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    Pay with PayHere · Rs. {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </>
                 )}
               </button>

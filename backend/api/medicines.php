@@ -1,12 +1,10 @@
 <?php
 /**
  * Medicines API
- * GET    /api/medicines.php             - Get all medicines (with supplier name + reviews)
- * GET    /api/medicines.php?id=1        - Get single medicine
- * GET    /api/medicines.php?supplier_id=5 - Filter by supplier
- * POST   /api/medicines.php             - Add new medicine
- * PUT    /api/medicines.php             - Update medicine
- * DELETE /api/medicines.php?id=1        - Delete medicine
+ * GET  /api/medicines.php?role=Supplier&company_id=5 - Get medicines for a specific company
+ * GET  /api/medicines.php?role=Pharmacy             - Get all available medicines (stock > 0)
+ * GET  /api/medicines.php?role=Customer             - Get all available medicines (stock > 0)
+ * POST /api/medicines.php                           - Add new medicine (supplier only)
  */
 require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/database.php';
@@ -14,147 +12,129 @@ require_once __DIR__ . '/../config/database.php';
 $db = (new Database())->getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 
-switch ($method) {
+if ($method === 'GET') {
+    try {
+        $role = $_GET['role'] ?? '';
+        $company_id = $_GET['company_id'] ?? null;
 
-    // ─── GET ──────────────────────────────────────────────
-    case 'GET':
-        try {
-            $sql = "SELECT m.id, m.legacy_id, m.name, m.brand, m.price, m.stock, m.expire_date AS expireDate,
-                           m.description, m.supplier_id AS supplierId, 
-                           u.name AS supplierName, u.legacy_id AS supplierLegacyId
-                    FROM medicines m
-                    LEFT JOIN users u ON m.supplier_id = u.id
-                    WHERE 1=1";
-            $params = [];
+        $sql = "SELECT m.id, m.supplier_id as company_id, m.brand, m.name, 
+                       m.price, m.mrp, m.expire_date as expireDate, m.stock, m.description, 
+                       u.name AS company_name
+                FROM medicines m
+                LEFT JOIN users u ON m.supplier_id = u.id
+                WHERE 1=1";
+        
+        $params = [];
 
-            if (!empty($_GET['id'])) {
-                $sql .= " AND m.id = :id";
-                $params[':id'] = $_GET['id'];
-            }
-            if (!empty($_GET['supplier_id'])) {
-                $sql .= " AND m.supplier_id = :sid";
-                $params[':sid'] = $_GET['supplier_id'];
-            }
-
-            $sql .= " ORDER BY m.id ASC";
-            $stmt = $db->prepare($sql);
-            $stmt->execute($params);
-            $medicines = $stmt->fetchAll();
-
-            // Attach reviews to each medicine
-            $reviewStmt = $db->prepare("SELECT reviewer, rating, comment, review_date AS date FROM medicine_reviews WHERE medicine_id = :mid ORDER BY id ASC");
-
-            foreach ($medicines as &$med) {
-                $reviewStmt->execute([':mid' => $med['id']]);
-                $med['reviews'] = $reviewStmt->fetchAll();
-                // Cast numeric types for frontend compatibility
-                $med['price'] = (float) $med['price'];
-                $med['stock'] = (int) $med['stock'];
-            }
-            unset($med);
-
-            echo json_encode($medicines);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["error" => $e->getMessage()]);
-        }
-        break;
-
-    // ─── POST ─────────────────────────────────────────────
-    case 'POST':
-        $data = json_decode(file_get_contents("php://input"), true);
-
-        if (empty($data['name']) || empty($data['brand'])) {
-            http_response_code(400);
-            echo json_encode(["error" => "name and brand are required."]);
-            exit;
-        }
-
-        try {
-            $stmt = $db->prepare("INSERT INTO medicines (name, brand, price, stock, expire_date, description, supplier_id) 
-                                  VALUES (:name, :brand, :price, :stock, :expire, :desc, :sid)");
-            $stmt->execute([
-                ':name'   => $data['name'],
-                ':brand'  => $data['brand'],
-                ':price'  => $data['price'] ?? 0,
-                ':stock'  => $data['stock'] ?? 0,
-                ':expire' => $data['expireDate'] ?? null,
-                ':desc'   => $data['description'] ?? null,
-                ':sid'    => $data['supplierId'] ?? null,
-            ]);
-
-            $newId = $db->lastInsertId();
-            echo json_encode(["success" => true, "id" => $newId, "message" => "Medicine added."]);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["error" => $e->getMessage()]);
-        }
-        break;
-
-    // ─── PUT ──────────────────────────────────────────────
-    case 'PUT':
-        $data = json_decode(file_get_contents("php://input"), true);
-
-        if (empty($data['id'])) {
-            http_response_code(400);
-            echo json_encode(["error" => "Medicine id is required."]);
-            exit;
-        }
-
-        try {
-            $fields = [];
-            $params = [':id' => $data['id']];
-
-            if (isset($data['name']))        { $fields[] = "name = :name";                $params[':name']   = $data['name']; }
-            if (isset($data['brand']))       { $fields[] = "brand = :brand";              $params[':brand']  = $data['brand']; }
-            if (isset($data['price']))       { $fields[] = "price = :price";              $params[':price']  = $data['price']; }
-            if (isset($data['stock']))       { $fields[] = "stock = :stock";              $params[':stock']  = $data['stock']; }
-            if (isset($data['expireDate']))  { $fields[] = "expire_date = :expire";       $params[':expire'] = $data['expireDate']; }
-            if (isset($data['description'])) { $fields[] = "description = :desc";         $params[':desc']   = $data['description']; }
-            if (isset($data['supplierId']))  { $fields[] = "supplier_id = :sid";          $params[':sid']    = $data['supplierId']; }
-
-            if (empty($fields)) {
+        // Role-based fetching logic
+        if (strtolower($role) === 'supplier') {
+            if (!$company_id) {
                 http_response_code(400);
-                echo json_encode(["error" => "No fields to update."]);
+                echo json_encode(["error" => "company_id is required for supplier role."]);
                 exit;
             }
-
-            $sql = "UPDATE medicines SET " . implode(', ', $fields) . " WHERE id = :id";
-            $stmt = $db->prepare($sql);
-            $stmt->execute($params);
-
-            echo json_encode(["success" => true, "message" => "Medicine updated."]);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["error" => $e->getMessage()]);
+            $sql .= " AND m.supplier_id = :cid";
+            $params[':cid'] = $company_id;
+        } elseif (strtolower($role) === 'pharmacy' || strtolower($role) === 'customer') {
+            // Pharmacies and customers see all medicines that have stock
+            $sql .= " AND m.stock > 0";
         }
-        break;
 
-    // ─── DELETE ───────────────────────────────────────────
-    case 'DELETE':
-        if (empty($_GET['id'])) {
+        $sql .= " ORDER BY m.id DESC";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $medicines = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch dynamic commission rate
+        $setStmt = $db->query("SELECT setting_value FROM settings WHERE setting_key = 'commission_rate'");
+        $setResult = $setStmt->fetch(PDO::FETCH_ASSOC);
+        $commissionRate = $setResult ? (float)$setResult['setting_value'] : 1.0;
+        $multiplier = 1 + ($commissionRate / 100);
+
+        // Cast numeric types and add markup for buyers
+        foreach ($medicines as &$med) {
+            $basePrice = (float) $med['price'];
+            if (strtolower($role) === 'pharmacy' || strtolower($role) === 'customer') {
+                $med['price'] = round($basePrice * $multiplier, 2);
+            } else {
+                $med['price'] = $basePrice;
+            }
+            $med['stock'] = (int) $med['stock'];
+        }
+        unset($med);
+
+        echo json_encode(["success" => true, "data" => $medicines]);
+
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["error" => "Database error: " . $e->getMessage()]);
+    }
+
+} elseif ($method === 'POST') {
+    $data = json_decode(file_get_contents("php://input"), true);
+    
+    // Security check: only allow 'supplier' to add medicines
+    $role = $data['role'] ?? '';
+    if (strtolower($role) !== 'supplier' && strtolower($role) !== 'company') {
+        http_response_code(403);
+        echo json_encode(["error" => "Only registered suppliers can add medicines."]);
+        exit;
+    }
+
+    $supplier_id  = $data['company_id'] ?? null; // Frontend sends company_id
+    $name         = $data['name'] ?? '';
+    $brand        = $data['brand'] ?? '';
+    $price        = $data['price'] ?? 0;
+    $mrp          = $data['mrp'] ?? 0;
+    $stock        = $data['stock'] ?? 0;
+    $expire_date  = $data['expireDate'] ?? null;
+    $description  = $data['description'] ?? '';
+
+    if (!$supplier_id || !$name || !$brand || !$price || !$mrp) {
+        http_response_code(400);
+        echo json_encode(["error" => "Supplier ID, name, brand, base price, and MRP are required."]);
+        exit;
+    }
+
+    try {
+        // fetch current commission rate to validate
+        $setStmt = $db->query("SELECT setting_value FROM settings WHERE setting_key = 'commission_rate'");
+        $setResult = $setStmt->fetch(PDO::FETCH_ASSOC);
+        $commissionRate = $setResult ? (float)$setResult['setting_value'] : 1.0;
+        
+        $finalPrice = round($price * (1 + ($commissionRate / 100)), 2);
+
+        if ($finalPrice > $mrp) {
             http_response_code(400);
-            echo json_encode(["error" => "Medicine id is required."]);
+            echo json_encode(["error" => "The final platform price (Rs. {$finalPrice}) exceeds your MRP (Rs. {$mrp}). Please adjust the base price or MRP."]);
             exit;
         }
 
-        try {
-            $stmt = $db->prepare("DELETE FROM medicines WHERE id = :id");
-            $stmt->execute([':id' => $_GET['id']]);
+        $sql = "INSERT INTO medicines (supplier_id, name, brand, price, mrp, stock, expire_date, description) 
+                VALUES (:supplier_id, :name, :brand, :price, :mrp, :stock, :expire_date, :description)";
+        
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':supplier_id' => $supplier_id,
+            ':name'        => $name,
+            ':brand'       => $brand,
+            ':price'       => $price,
+            ':mrp'         => $mrp,
+            ':stock'       => $stock,
+            ':expire_date' => $expire_date,
+            ':description' => $description
+        ]);
 
-            if ($stmt->rowCount() > 0) {
-                echo json_encode(["success" => true, "message" => "Medicine deleted."]);
-            } else {
-                http_response_code(404);
-                echo json_encode(["error" => "Medicine not found."]);
-            }
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["error" => $e->getMessage()]);
-        }
-        break;
+        $newId = $db->lastInsertId();
+        echo json_encode(["success" => true, "id" => $newId, "message" => "Medicine added successfully."]);
 
-    default:
-        http_response_code(405);
-        echo json_encode(["error" => "Method not allowed."]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["error" => "Database error: " . $e->getMessage()]);
+    }
+
+} else {
+    http_response_code(405);
+    echo json_encode(["error" => "Method not allowed. Use GET or POST."]);
 }

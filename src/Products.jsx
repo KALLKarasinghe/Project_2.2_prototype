@@ -42,8 +42,8 @@ const Products = () => {
 
   // Step 1: Filter by search text only
   const searchedMedicines = medicines.filter(med =>
-    med.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    med.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (med.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (med.brand || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (med.description && med.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -150,13 +150,19 @@ const Products = () => {
                         )}
                       </div>
                     </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); addToCart(med, 1); toast.success(`${med.name} added to cart`); }}
-                      className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm shadow-blue-500/20"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-                      Add to Cart
-                    </button>
+                    {currentUser?.role?.toLowerCase() === 'pharmacy' ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); addToCart(med, 1); toast.success(`${med.name} added to cart`); }}
+                        className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm shadow-blue-500/20"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                        Add to Cart
+                      </button>
+                    ) : (
+                      <div className="w-full mt-3 bg-slate-100 text-slate-500 font-semibold py-2.5 rounded-xl text-xs text-center border border-slate-200">
+                        Available at registered pharmacies
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (
@@ -289,13 +295,19 @@ const Products = () => {
             </div>
             
             <div className="p-6 sm:p-8 pt-4 border-t border-slate-100 bg-white flex-shrink-0">
-              <button 
-                onClick={() => { addToCart(selectedMedicine, 1); toast.success(`${selectedMedicine.name} added to cart`); setSelectedMedicine(null); }}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-slate-900/20 transition-all hover:shadow-slate-800/30 active:scale-95 flex justify-center items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                Add to Cart
-              </button>
+              {currentUser?.role?.toLowerCase() === 'pharmacy' ? (
+                <button 
+                  onClick={() => { addToCart(selectedMedicine, 1); toast.success(`${selectedMedicine.name} added to cart`); setSelectedMedicine(null); }}
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-slate-900/20 transition-all hover:shadow-slate-800/30 active:scale-95 flex justify-center items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                  Add to Cart
+                </button>
+              ) : (
+                <div className="w-full bg-slate-100 text-slate-500 font-bold py-4 rounded-xl text-sm text-center border border-slate-200">
+                  Available exclusively at registered pharmacies
+                </div>
+              )}
             </div>
           </div>
         </div>

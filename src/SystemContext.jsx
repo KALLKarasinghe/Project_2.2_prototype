@@ -35,17 +35,9 @@ export const SystemProvider = ({ children }) => {
   const [specialMedicines, setSpecialMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ─── Cart State ─────────────────────────────────────────
-  const [cart, setCart] = useState(() => {
-    const saved = localStorage.getItem('cart');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // ─── Cart State (Database-backed) ────────────────────────
+  const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-
-  // Persist cart to localStorage
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
 
   // Derived cart total
   const cartTotal = useMemo(() => {
@@ -60,21 +52,50 @@ export const SystemProvider = ({ children }) => {
   // ─── Fetch helpers (wrapped in useCallback) ─────────────
   const fetchMedicines = useCallback(async () => {
     try {
-      const data = await api('medicines.php');
-      setMedicines(data);
+      const res = await api('medicines.php');
+      const items = res.data || res;
+      // Backend now returns columns aliased to match frontend expectations
+      const mapped = (Array.isArray(items) ? items : []).map(med => ({
+        id: med.id,
+        company_id: med.company_id,
+        brand: med.brand,
+        name: med.name,
+        description: med.description,
+        price: med.price,
+        expireDate: med.expireDate,
+        stock: med.stock,
+        company_name: med.company_name
+      }));
+      setMedicines(mapped);
     } catch (err) {
       console.error('Failed to fetch medicines:', err);
     }
   }, []);
 
   const fetchOrders = useCallback(async () => {
+    if (!currentUser?.id) {
+      setOrders([]);
+      return;
+    }
+    
+    // Prevent invalid API calls for Admins or other roles
+    const role = currentUser.role.toLowerCase();
+    if (role !== 'pharmacy' && role !== 'supplier' && role !== 'company') {
+      setOrders([]);
+      return;
+    }
+    
     try {
-      const data = await api('orders.php');
-      setOrders(data);
+      const data = await api(`orders.php?role=${role}&user_id=${currentUser.id}`);
+      if (data.success) {
+        setOrders(data.data);
+      } else {
+        console.error('Failed to fetch orders:', data.error);
+      }
     } catch (err) {
       console.error('Failed to fetch orders:', err);
     }
-  }, []);
+  }, [currentUser]);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -103,6 +124,48 @@ export const SystemProvider = ({ children }) => {
     }
   }, []);
 
+  // ─── Fetch Cart from Database ───────────────────────────
+  const fetchCart = useCallback(async () => {
+    if (!currentUser?.id) {
+      console.log('🛒 fetchCart: No user, clearing cart.');
+      setCart([]);
+      return;
+    }
+    console.log('🛒 fetchCart: Fetching cart for user_id =', currentUser.id);
+    try {
+      const response = await fetch(`${API_BASE}/cart.php?user_id=${currentUser.id}`);
+      const text = await response.text();
+      console.log('🛒 fetchCart raw response:', text);
+      
+      const res = JSON.parse(text);
+      if (res.success && Array.isArray(res.data)) {
+        // Map DB cart items to the shape React components expect
+        const mapped = res.data.map(item => ({
+          id: item.medicine_id,
+          cart_id: item.cart_id,
+          name: item.name,
+          brand: item.brand,
+          price: item.price,
+          stock: item.stock,
+          company_id: item.company_id,
+          company_name: item.company_name,
+          quantity: item.quantity,
+        }));
+        console.log('🛒 fetchCart: Loaded', mapped.length, 'items');
+        setCart(mapped);
+      } else {
+        console.warn('🛒 fetchCart: Unexpected response', res);
+      }
+    } catch (err) {
+      console.error('🛒 fetchCart error:', err);
+    }
+  }, [currentUser]);
+
+  // ─── Reload cart whenever user changes (login / logout) ──
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
   // ─── Load all data on mount ─────────────────────────────
   useEffect(() => {
     async function loadAll() {
@@ -113,11 +176,12 @@ export const SystemProvider = ({ children }) => {
         fetchUsers(),
         fetchPendingUsers(),
         fetchSpecialMedicines(),
+        fetchCart(),
       ]);
       setLoading(false);
     }
     loadAll();
-  }, [fetchMedicines, fetchOrders, fetchUsers, fetchPendingUsers, fetchSpecialMedicines]);
+  }, [fetchMedicines, fetchOrders, fetchUsers, fetchPendingUsers, fetchSpecialMedicines, fetchCart]);
 
   // ─── Persist currentUser session in localStorage ────────
   useEffect(() => {
@@ -130,8 +194,7 @@ export const SystemProvider = ({ children }) => {
 
   // ─── Auth ───────────────────────────────────────────────
   const loginUser = async (credentials) => {
-    // credentials: { name, password } for Admin or { email, password } for others
-    const data = await api('auth.php', {
+    const data = await api('auth.php?action=login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
@@ -143,49 +206,62 @@ export const SystemProvider = ({ children }) => {
 
   const logoutUser = () => {
     setCurrentUser(null);
+    setCart([]);
+    setOrders([]);
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('cart');
   };
 
   // ─── Orders ─────────────────────────────────────────────
-  const placeOrder = async (medicine, quantity) => {
+  const placeOrder = async (orderPayload) => {
+    // orderPayload: { pharmacy_id, company_id, total_amount, cart_items }
     try {
-      await api('orders.php', {
+      const res = await api('orders.php', {
         method: 'POST',
         body: JSON.stringify({
-          medicineId: medicine.id,
-          pharmacyId: currentUser?.id || null,
-          quantity: quantity,
+          ...orderPayload,
+          role: currentUser?.role
         }),
       });
       await fetchOrders(); // refresh from DB
+      await fetchMedicines(); // stock changed
+      return res;
     } catch (err) {
       console.error('Failed to place order:', err);
+      throw err;
+    }
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      await api('orders.php', {
+        method: 'PUT',
+        body: JSON.stringify({ 
+          order_id: orderId, 
+          status: newStatus, 
+          role: currentUser.role 
+        }),
+      });
+      await Promise.all([fetchOrders(), fetchMedicines()]); 
+    } catch (err) {
+      console.error('Failed to update order status:', err);
     }
   };
 
   const approveOrder = async (orderId) => {
-    try {
-      await api('orders.php', {
-        method: 'PUT',
-        body: JSON.stringify({ id: orderId, status: 'Approved' }),
-      });
-      await Promise.all([fetchOrders(), fetchMedicines()]); // stock changed too
-    } catch (err) {
-      console.error('Failed to approve order:', err);
-    }
+    await updateOrderStatus(orderId, 'confirmed');
   };
 
   // ─── Users ──────────────────────────────────────────────
   const registerUser = async (userData) => {
-    try {
-      await api('users.php', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
-      await fetchPendingUsers();
-    } catch (err) {
-      console.error('Failed to register user:', err);
-    }
+    const isFormData = userData instanceof FormData;
+    const data = await api('auth.php?action=register', {
+      method: 'POST',
+      body: isFormData ? userData : JSON.stringify(userData),
+      ...(isFormData ? { headers: {} } : {})
+    });
+    await fetchPendingUsers();
+    return data;
   };
 
   const approveUser = async (userId) => {
@@ -235,45 +311,85 @@ export const SystemProvider = ({ children }) => {
     }
   };
 
-  // ─── Cart Functions ─────────────────────────────────────
-  const addToCart = (medicine, quantity = 1) => {
-    setCart(prev => {
-      const existing = prev.find(item => item.id === medicine.id);
-      if (existing) {
-        return prev.map(item =>
-          item.id === medicine.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      }
-      return [...prev, {
-        id: medicine.id,
-        name: medicine.name,
-        brand: medicine.brand,
-        price: parseFloat(medicine.price) || 0,
-        quantity,
-      }];
-    });
-  };
-
-  const removeFromCart = (medicineId) => {
-    setCart(prev => prev.filter(item => item.id !== medicineId));
-  };
-
-  const updateCartQty = (medicineId, newQty) => {
-    if (newQty <= 0) {
-      removeFromCart(medicineId);
+  // ─── Cart Functions (Database-backed) ───────────────────
+  const addToCart = async (medicine, quantity = 1) => {
+    if (!currentUser?.id) {
+      console.warn('addToCart: No logged-in user. currentUser =', currentUser);
       return;
     }
-    setCart(prev =>
-      prev.map(item =>
-        item.id === medicineId ? { ...item, quantity: newQty } : item
-      )
-    );
+    const payload = {
+      user_id: Number(currentUser.id),
+      medicine_id: Number(medicine.id),
+      quantity: Number(quantity),
+    };
+    console.log('🛒 addToCart payload:', JSON.stringify(payload));
+    try {
+      const response = await fetch(`${API_BASE}/cart.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const text = await response.text(); // Get raw text first
+      console.log('🛒 Cart API raw response:', text, '| Status:', response.status);
+      
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        console.error('🛒 JSON parse error. Raw response was:', text);
+        return;
+      }
+      
+      if (data.success) {
+        console.log('✅ Cart item saved:', data);
+        await fetchCart(); // Refresh from DB
+      } else {
+        console.error('❌ Cart API returned error:', data.error);
+      }
+    } catch (err) {
+      console.error('❌ Network/fetch error in addToCart:', err);
+    }
   };
 
-  const clearCart = () => {
-    setCart([]);
+  const removeFromCart = async (medicineId) => {
+    if (!currentUser?.id) return;
+    try {
+      await fetch(`${API_BASE}/cart.php?user_id=${currentUser.id}&medicine_id=${medicineId}`, { method: 'DELETE' });
+      await fetchCart();
+    } catch (err) {
+      console.error('Failed to remove from cart:', err);
+    }
+  };
+
+  const updateCartQty = async (medicineId, newQty) => {
+    if (!currentUser?.id) return;
+    if (newQty <= 0) {
+      await removeFromCart(medicineId);
+      return;
+    }
+    try {
+      await api('cart.php', {
+        method: 'PUT',
+        body: JSON.stringify({
+          user_id: currentUser.id,
+          medicine_id: medicineId,
+          quantity: newQty,
+        }),
+      });
+      await fetchCart();
+    } catch (err) {
+      console.error('Failed to update cart qty:', err);
+    }
+  };
+
+  const clearCart = async () => {
+    if (!currentUser?.id) return;
+    try {
+      await fetch(`${API_BASE}/cart.php?user_id=${currentUser.id}&clear_all=true`, { method: 'DELETE' });
+      setCart([]);
+    } catch (err) {
+      console.error('Failed to clear cart:', err);
+    }
   };
 
   const toggleCart = () => setIsCartOpen(prev => !prev);
@@ -287,6 +403,7 @@ export const SystemProvider = ({ children }) => {
     pendingUsers,
     loading,
     placeOrder,
+    updateOrderStatus,
     approveOrder,
     registerUser,
     approveUser,

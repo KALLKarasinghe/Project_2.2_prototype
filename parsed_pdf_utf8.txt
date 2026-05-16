@@ -1,0 +1,551 @@
+﻿PROJECT PROPOSAL  
+GROUP PROJECT  
+CST 291 -2 
+  
+  
+  
+  
+Group No: CST  19  
+Pharmacy Inventory and Ordering System  
+  
+  
+Computer Science and Technology  
+  
+  
+Department of Computer Science and Informatics, 
+Faculty of Applied Sciences,  
+Uva Wellassa University of Sri Lanka  
+2026  
+ i 
+ DECLARATION  
+ 
+We hereby declare that the project will be developed by us with our own effort and that 
+no part will be plagiarized without citations under the supervision of Mr. U.E. 
+Ranasooriya.  This Project Proposal is submitted for the partial fulfi lment of the 
+requirement of the course unit CST 219 -2, Project 1, for the Computer Science and 
+Technology degree program.  
+                              Group Details  
+                                      Group No: CST 19  
+No Name Of Student  Index NO  Email Address  Signature  
+1 T.N. Dasanayaka   UWU/CST/23/007   cst23007@std.uwu.ac.lk    
+2 D.K.C.D.  Dissanayaka   UWU/CST/23/033   cst23033@std.uwu.ac.lk    
+3 K.A.L.L.  Karasinghe   UWU/CST/23/040   cst23040@std.uwu.ac.lk    
+4 G.J.S.  Sandeepa  UWU/CST/23/031  cst23031@std.uwu.ac.lk    
+  
+                                     Supervisor Details:  
+Name of the Supervisor  E-mail Contact Number  
+Mr. U.E. Ranasooriya   umesh@uwu.ac.lk   0702051531  
+ 
+ 
+Project Approval:  
+ 
+ààààààà                                          àààààààà..  
+Mr. U.E. Ranasooriya                                                       Ms.R.M.K.M Rathnayake  
+Supervisor                                                                         Co -supervisor  
+Date:   /05/2026                                                              Date:   /05/2026  Name of the Co -supervisor  E-mail Contact Number  
+Ms.R.M.K.M . Rathnayake  kasunikarathnayake2000@gmail.com   0701497334  ii 
+  
+Table of Contents  
+1. Introduction  ................................ ................................ ...........................  1 
+1.1 Project Title  ................................ ................................ ................................ ........  1 
+1.2 Project Description ................................ ................................ .............................  1 
+1.3 Background and Motivation  ................................ ................................ ..............  1 
+1.4 Problem in Brief  ................................ ................................ ................................ . 2 
+1.5 Proposed Solution  ................................ ................................ ..............................  3 
+1.6   Project Aim and Objective  ................................ ................................ ...............  4 
+1.6.1 Aim:  ................................ ................................ ................................ ..........  4 
+1.6.2 Objectives:  ................................ ................................ ................................  4 
+2. Methodology  ................................ ................................ ..........................  4 
+2.1 Software Development Methodology  ................................ ................................  4 
+2.2 Application of the Waterfall Model in Pharmacy Supply  Management   
+System  ................................ ................................ ................................ ......................  5 
+3. Requirements Identification  ................................ ................................  9 
+3.1 Functional Requirements  ................................ ................................ ...................  9 
+3.2 Non -Functional Requirements  ................................ ................................ .........  12 
+3.3 System Requirements ................................ ................................ .......................  13 
+3.4 User Roles  ................................ ................................ ................................ ........  14 
+4. Project Plan  ................................ ................................ .........................  15 
+4.1 Project Schedule Overview  ................................ ................................ ..............  15 
+4.2 Detailed Project Plan ................................ ................................ ........................  16 
+5. References  ................................ ................................ ................................ .....................  17 
+ 
+       
+1 
+ 1. Introduction  
+1.1          Project Title  
+ Pharmacy Inventory and Ordering System  
+1.2          Project Description  
+This project focuses on the design and development of a  web-based B2B pharmacy 
+supply management system that connects retail pharmacies with pharmaceutical 
+suppliers. The system enables pharmacies to digitally place orders, monitor stock 
+levels, and receive timely deliveries. The system  also facilitates  the connection with the 
+medical agents for special medicine needs.  
+On the supplier side, the system provides tools to manage product listings, update 
+inventory quantities, and process incoming orders efficiently. The system also 
+integrates automated features such as  inventory tracking, expiry monitoring, and 
+notification alerts,  ensuring smooth and reliable pharmaceutical distribution.  
+This platform connects medical agents with pharmacies and customers by enabling 
+them to obtain specialized and high demand medicines such as chemotherapy drugs, 
+which are not accessible through traditional  pharmaceutical distribution channels. It 
+also aims to replace traditional manual ordering methods with a more accurate, 
+transparent, and scalable digital solution.  
+1.3          Background and Motivation   
+In the Sri Lankan pharmaceutical supply chain , the process continues to depend on 
+traditional and manual communication methods , including phone calls, handwri tten 
+documentation, spreadsheets,  and messaging applications. Although these methods 
+have been used for many years. They often create significant operational challenges for 
+pharmacies and medicine suppliers as manual systems increase the risk of human error, 
+reduce efficiency , and negatively impact inventory control and medicine distribution 
+processes.  2 
+ According  to the World Health Organization, poor inventory management and weak 
+communication systems can directly contribute to medicine shortages, treatment 
+delays , and the wastage of pharmaceutical products [1].  
+The rapid advancement of web technologies platforms provides significant 
+opportunities to modify pharmaceutical supply chain operations. Centralized web -
+based  systems can improve communication, maintain accurate real-time records, and 
+reduce paperwork and human errors.  
+The proposed system aims to develop a centralized web-based  platform that connects 
+pharmacies, suppliers , and medical agents within a single digital environment, enabling 
+pharmacies to search for medicines, place orders online, monitor stock availability , and 
+maintain transaction records.  
+Another major motivation for this project is the difficulty  of obtaining rare or critical 
+medicines that are not readily available through traditional pharmaceutical distribution. 
+In Sri Lanka, certain medicines are available only through selected distributors or 
+specialized medical agents. Therefore, the proposed sy stem aims to establish a secure 
+and centralized connection between customers and verified medical agents to improve 
+access to essential medic ines while ensuring reliability . 
+1.4     Problem in Brief  
+The pharmaceutical supply management system in Sri Lanka faces several operational 
+challenges due to manual processes and traditional communication methods. 
+Pharmacies usually order medicines through phone calls or messaging applications, 
+which may lead to  miscommunication, order errors , and delays in urgent medicine 
+orders. In addition, many pharmacies depend on only a limited number of regular 
+suppliers. The lack of real-time stock of information makes it difficult to compare prices 
+and expiry dates . Rare  drug orders take more time because these medicines are not 
+easily available from a single supplier. In most cases , pharmacies need to contact 
+several different suppliers to check availability. This process causes delays in medicine 
+orders.  
+Another major problem is that when medicines are ordered through phone calls, 
+pharmacies cannot verify expiry dates. Ordering medicines through phone calls often 3 
+ lacks proper documentation, which can lead to overstocking. In advance , which often 
+leads to the supply of near expiry  or expired stock. Without proper monitoring and 
+communication , pharmacies may stock too many medicines that expire before use , 
+leading to waste , while at the same time , they may run out of important medicines when 
+they are needed most. Furthermore, rare medicines are often not directly available in 
+pharmacies , and expensive medicines must be purchased through medical agents. Many 
+patients find it diffic ult to contact these agents and often do not have clear information 
+about drug prices.    
+1.5          Proposed Solution  
+To address the existing challenges in pharmaceutical supply management in Sri Lanka , 
+a web-based  application is proposed to create a centralized digital platform connecting 
+pharmacies,  customers,  suppliers , and medical agents. This system aims to replace 
+manual and fragmented processes by digitizing the entire ordering and inventory 
+process. The proposed system ensures better coordination between all stakeholders and 
+reduces dependency on traditional communi cation methods such as phone calls and 
+informal messaging.  
+ 
+One of the key features of the system is real-time medicine availability checking. This 
+allows pharmacies to view updated stock information from suppliers before placing 
+orders. This reduces communication errors, speeds up order processing , and improves 
+transparency between suppliers and pharmacies. The system also includes real-time 
+inventory management for pharmacies , enabling them to continuously monitor stock 
+levels and expiry dates. In addition, the platform will provide order tracking and 
+complete ord er history management. Another important feature is the integration with 
+verified medical agents for handling special cases and rare medicine requirements. This 
+ensures that even hard to find or urgent medicines can be sourced efficiently through a 
+wider p rofessional network.  
+ 
+Through those digitalized web application features can help reduce overstock and 
+medicine waste while improving good communication between suppliers. This 
+proactive approach significantly enhances inventory control and minimizes financial 
+losses caused by expired or excess medicines.  4 
+ 1.6   Project Aim and Objective   
+1.6.1 Aim:  
+To develop an efficient and user-friendly web -based  platform that serves as a channel 
+between pharmacies, suppliers, and medical agents, facilitating streamlined 
+pharmaceutical ordering and inventory management.  
+  
+1.6.2 Objectives:  
+1) To design a user-friendly  system with secure role-based  access, including 
+registration, login, password recovery, and admin controlled license verification 
+for pharmacies, companies, medical agents , and customers.  
+2) To develop an efficient medicine inventory and order management system that 
+enables companies to manage stock, track expiry dates, process orders, and 
+allow pharmacies to place, track, and cancel orders.  
+3) To implement an integrated payment, billing , and notification system that 
+supports multiple payment methods, invoice generation, payment tracking , and 
+real time alerts for orders, inventory changes, and system activities.  
+4) To provide reporting, analytics, and administrative control features that allow 
+system monitoring, sales visualization, commission management, user 
+management, and policy enforcement for better decision -making  
+ 
+2.       Methodology   
+2.1          Software Development Methodology  
+The project will use the Waterfall model as its software development method because 
+this model provides a clear and organized development path. The Waterfall model 
+works well for this project because it has established requirements for its web-based  
+system, which includes product management, order processing and tracking, inventory 
+management, and alert functions.  
+The project has already determined all system requirements, which will require only 
+minor changes throughout the development process. The project team can complete all 5 
+ project phases because this method enables better documentation, simpler management, 
+and precise task distribution among team members.  
+The Waterfall model enables effective project planning and time management, which 
+helps to complete the project within the given academic deadline requirements.  
+  
+2.2 Application of the Waterfall Model in Pharmacy Supply 
+Management System  
+Phase 1: Requirement Definition  
+The first phase of the project started with system requirements identification through 
+user needs analysis, which included pharmacy owners, pharmaceutical suppliers, 
+medical agents, and system administrators. The team used informal discussions 
+together with t heir observations to identify the main problems that occur in the current 
+manual system, including ordering delays, stock visibility issues, and expiry date 
+tracking difficulties.  
+Activities  carried out:  
+The team  held informal discussions with pharmacy users, suppliers, and students who 
+have knowledge about pharmacy inventory systems in order to identify the issues in 
+current pharmacy inventory management processes.  
+Through those discussions , the team discovered several key problems , which included:  
+the need t o perform the ordering process manually, the inability to provide updates 
+about stocks in real time, difficulty in managing expiry dates of medicines, the lack of 
+capabilities for generating reports, and challenges in purchasing special medicines.  
+Based on the above -identified  problems , the team determined the main  system 
+functions required for the proposed system.  The system  will provide  an online ordering 
+facility, support inventory  management, notify  users when stock levels reach low 
+quantities , send  notifications about product expiry dates , and generate  an analysis of 
+sales according to the past records . 
+The Waterfall model considers requirement engineering to be an essential stage, which 
+enables developers to define all system features before they start building the software 
+system.  6 
+ Phase 2: System Design  
+The system architecture and design were created according to the collected 
+requirements. The current stage of the project requires both data base design work and 
+system modelling  to create a proper implementation plan.  
+Design components:  
+1. Database Design:  A MySQL datab ase schema created for  
+1) Users  
+2) Products  
+3) Orders  
+4) Inventory  
+5) Payments  
+2. User Interface Design:  Wireframes designed for  
+1) Pharmacy Dashboard  
+2) Supplier Dashboard  
+3) Medical Agent Connection Portal  
+4) Admin Panel  
+ 
+3. System Model ling: UML diagrams created,  
+1) Use Case Diagram  
+2) Class Diagram  
+3) Sequence Diagram  
+ 
+4. Security Design:  
+1) Role -based access control  
+2) Secure login system  
+The Waterfall model requires system design completion before implementation begins 
+because this method maintains a clear structure throughout all system components.  
+  7 
+ Phase 3: Implementation  
+The system development process follows design specifications during this phase. The 
+development team uses module -based development to achieve better project 
+organization while simplifying the debugging process.  
+Technologies used:  
+1) Frontend: React.js  
+2) Backend: PHP  
+3) Database: MySQL  
+Modules implemented:  
+1) User authentication module  
+2) Product management module  
+3) Order processing and tracking module  
+4) Inventory management module  
+5) Notification system  
+Each module is based on the specific user workflows. The system automatically 
+updates inventory levels when a pharmacy order is placed while generating alerts 
+for low stock situations.  
+The Waterfall model ensures that each requirement is translated into a functional 
+component during this phase.  
+ 
+Phase 4: Testing  
+The system requires testing after implementation to confirm its functional accuracy and 
+dependable performance.  
+Testing types:  
+1) Unit Testing: Testing each module, such as login, order processing, and 
+inventory updates  
+2) Integration Testing: Ensuring that modules work together (ex, order placement 
+updates inventory correctly)  8 
+ 3) System Testing: Verifying that the entire system meets the defined 
+requirements  
+Key functionalities tested:  
+1) User registration and login  
+2) Product management  
+3) License and verification management  
+4) Order placement and tracking  
+5) Inventory updates  
+6) Low stock and expiry alerts  
+Testing ensures that the system functions operate as expected before the deployment.  
+  
+Phase 5: Deployment  
+The system will enter its operational phase after testing achieves successful results.  
+Deployment activities:  
+1) Hosting the web application on a server  
+2) Configuring the domain and database  
+3) Migrating data from development to production  
+4) Final system validation process  
+The deployment phase ensures that the system is accessible to the users and operates 
+smoothly in a real world environment.  
+ 
+Phase 6: Maintenance  
+The system requires constant observation with ongoing maintenance from the moment 
+of its deployment.  
+Maintenance activities:  
+1) Fixing bugs and errors  
+2) Updating system features  
+3) Improving performance  9 
+ 4) Enhancing security  
+User feedback will drive system improvements, which will occur during upcoming 
+software updates.  
+The Waterfall model defines a distinct maintenance phase that guarantees that systems 
+remain usable while they maintain their operational reliability.  
+  
+3. Requirements Identification  
+3.1 Functional Requirements  
+1. User Management  
+1) The system sh all allow users to register as a pharma cy, company, medical agent, 
+or customer by providing personal and business information.  
+2) The system shall enable users to log in with different roles, such as pharmacy, 
+company, medical agent, customer, and admin.  
+3) User access should be authenticate d by the system using a username and 
+password.  
+4) The system shall support password recovery functionality for users who forget 
+their login credentials.  
+5) The system shall provide membership plans with flexible billing options , 
+including weekly, monthly, and yearly subscriptions, for pharmacies, 
+companies, and medical agents.  
+2. License and Verification Management  
+1) The system should allow pharmacies, companies, and medical agents to upload 
+their licenses or legal documents for verification to ensure authenticity before 
+gaining full access to the platform.  
+2)  The admin should have the authority to review, verify , and approve submitted 
+licenses.  10 
+ 3. Inventory (Medicine) Management  
+1) The system shall allow users to view and browse available medicines through 
+details such as name, price, and availability.  
+2) The system shall allow companies to add, update, and view  medicine details, 
+including brand name, generic name, price, expiry date,  dosages , and batch 
+number.  
+3) The system shall automatically update  inventory  stock levels when an order is 
+placed.  
+4) The system shall send alerts to the companies when the product stock levels are 
+low. 
+ 
+4. Order Management  
+1)  The system shall allow pharmacies to add medicines to a cart  and place orders 
+online . 
+2) The system shall allow pharmacies to cancel order s. 
+3) The system shall allow companies to confirm order s. 
+4) The system shall store and maintain a complete history of all orders placed, 
+including order details and status updates.  
+5)  The system shall allow suppliers to view incoming orders and approve or reject 
+them.  
+6) The system shall generate invoices for each completed order.  
+7) The system shall provide pharmacies with an order tracking feature to monitor 
+the status of their orders.  
+8) The system shall allow companies to manage and update order status.  
+9) The system shall display the contact details of medical agents to customers 
+when they request special medicine through an agent.  
+ 
+5. Payment and Billing System  
+1) The system shall generate an invoice and display a notification co nfirming the 
+order  approval  by the company  to support payment verification .  11 
+ 2) The system shall all ow p harmacies to make paym ents through availabl e 
+methods such as bank transfer  or online payment . 
+3) The system shall provide an option to upload a bank receipt for a payment made 
+through bank transfer . 
+4) The system shall track the payment status , such as paid and pending.  
+5)  The system shall generate a bill after payment  is completed . 
+6) The system shall allow s uppliers to view payment history for all transactions.  
+  
+6. Notification System  
+1) The system shall display notifications on the dashboard  of each user . 
+2)  The system shall be able to generate notifications for key activities.  
+o Order confirmation  
+o Order progress changes  
+o Inventory warnings.  
+ 
+7. Reporting and Analytics  
+1) The system shall allow admin users to monitor overall system performance . 
+2) The system shall present monthly sales data using graphs for better 
+visualization.  
+  
+8. Admin Panel  
+1) The system shall provide administrators with functionality to manage all 
+registered users . 
+2) The system shall enable the admin to review and approve licenses submitted by 
+companies, pharmacies, and medical agents before activating their accounts . 
+3) The system shall generate overall system reports.  
+4) The system shall display  rules and regulations to companies, pharmacies, 
+customers, and agents during the sign-in process to ensure awareness of 
+platform policies before access ing the system . 12 
+ 5)  The system shall provide the admin with functionality to manage commissions 
+from companies.  
+  
+3.2 Non-Functional Requirements  
+1. Usability  
+1) The system shall  have a simple and user -friendly interface.  
+2) The system shall enable easy navigation for all types of users.  
+3) Pages sh all load within an acceptable response time (e.g. , under 3 seconds) . 
+ 
+2. Performance  
+1) The system shall support  multiple users simultaneously.  
+2) The system shall process data (orders, payments, updates) with minimal 
+processing delay.  
+ 
+3. Scalability  
+1) The system shall support future expansion (more users, more products).  
+2) The system shall allow adding new features without affecting existing 
+functionality.  
+ 
+4. Security  
+1) The system shall implement secure u ser authentication.  
+2) The system shall encrypt all user passwords.  
+3) The system shall prevent unauthorized access.  
+4) The system shall verify all licenses.  
+5. Reliability  
+1) The system shall operate continuously with high reliability and minimal system 
+failures. 
+2) The system shall ensure accurate and consistent data storage . 
+ 13 
+ 6. Maintainability  
+1) The system code shall be well-structured  to support easy maintenance and 
+updates . 
+2) The system shall be designed to support efficient identification and fixing bugs 
+and errors . 
+ 
+7. Availability  
+1) The system shall be available 24/7 with minimal scheduled downtime. Users 
+shall be notified in advance of maintenance activities . 
+  
+3.3 System Requirements  
+1. Hardware Requirements  
+1) Internet connection (Wi -Fi or mobile data) . 
+2) Laptop or Desktop computer with:  
+ò Hard Disk: 10 GB or higher  
+ò RAM: 8 GB or higher  
+ò Processor: Intel i5 or higher  
+ò Operating System: Windows 10/11 or macOS  
+3) Storage device for the backups and project files . 
+2. Software Requirements  
+1) IDE: Visual Studio Code  
+2) Web Browser: Google Chrome / Microsoft Edge  
+3) Database Server: MySQL  
+4) Local Server: XAMPP / Apache / Node.js runtime  
+5) Design Tools: Figma  
+3. Technologies  
+1) Frontend: React.js  
+2) Backend: PHP  
+3) Database: MySQL  
+4) Version Control: Git and GitHub  14 
+ 3.4 User Roles  
+1. Admin  
+1) Manage user accounts, including creation, updating, and deletion of users.  
+2) Verify and approve pharmacy, supplier, and medical agent licenses . 
+3) Monitor system activities and user transactions.  
+4) Generate analytical reports related to users and financial activities.  
+5) Manage financial operations, including payments, commissions, and 
+settlements.  
+6) Configure and maintain system settings , including roles and permissions.  
+ 
+2. Supplier  
+1) Register and authenticate within the system.  
+2) Manage company profile and business information.  
+3) Add, update, and remove pharmaceutical product listings.  
+4) Manage inventory levels and stock availability.  
+5) Receive, review, and respond to incoming orders from pharmacies.  
+6) Update the order processing stage and the delivery stage.  
+7) Review and respond to ratings and feedback submitted by pharmacies.   
+ 
+3. Pharmacy  
+1) Register and authenticate within the system.  
+2) Maintain and update pharmacy profile.  
+3) Browse, search, and filter available pharmaceutical products.  
+4) Place and manage orders through the system.  
+5) Track the status of orders in real time.  
+6) Receive notification  regarding stock availability, order updates, and system 
+alerts.  
+7) Provide ratings and reviews  for suppliers and products.  
+ 15 
+ 3.4.4 Customer  
+1) Register and authenticate within the system.  
+2) Browse and search available medicines . 
+3) Request medicines from agents . 
+4) Submit feedback, ratings, and reviews for medical agents.  
+ 
+3.4.5 Medical Agent  
+1) Register and authenticate within the system.  
+2) Maintain and update personal profile information.  
+3) Add, update, and manage specialized or rare pharmaceutical products.  
+ 
+ 
+4. Project Plan  
+4.1 Project Schedule Overview  
+The project will be completed over a period of 14 weeks, following the Software 
+Development Life Cycle (SDLC). Each phase is carefully planned to ensure timely 
+completion.  
+  
+ 
+ 
+ 
+ 
+ 
+ 16 
+ 4.2 Gant t chart  
+ 
+ 
+ Tasks/Activities  Weeks  
+1 2 3 4 5 6 7 8 9 10 11 12 13 1
+4 
+Requirement 
+Gathering                              
+Requirement 
+Analysis and 
+Specification                              
+Project Proposal 
+Submission                              
+Project Proposal 
+Presentation                              
+ER Diagram 
+and Use Case 
+Diagram                              
+Database 
+Design                              
+Backend 
+Development                              
+Frontend 
+Development                              
+Implementation 
+and Unit 
+Testing                              
+Progress 
+Presentation                              
+Integration and 
+System Testing                              
+Operation and 
+Maintenance                              
+ Documentation                              17 
+ 5. References  
+ 
+[1] World Health Organization. ôMedicines shortages and supply chain challenges.ö 
+Accessed May 10, 2026  
+[2] Ian Sommerville. 2016. Software Engineering (10th ed.). Pearson.  
+[3] Meta Open Source. 2026. React Documentation. Retrieved May 9, 2026 , from 
+https://react.dev/  
+[4] Oracle Corporation. 2026. MySQL Documentation. Retrieved May 9, 2026 from 
+https://dev.mysql.com/doc/  
+[5] PHP Documentation Group. 2026. PHP Manual. Retrieved May 9, 2026 from 
+https://www.php.net/docs.php  
+[6] National Medicines Regulatory Authority. 2015. National Medicines Regulatory 
+Authority Act, No. 5 of 2015. Government of Sri Lanka. Retrieved May 9, 2026 from 
+https://nmra.gov.lk/  
+ 
+ 

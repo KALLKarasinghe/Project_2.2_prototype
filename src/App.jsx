@@ -16,6 +16,7 @@ import SuppliersList from './SuppliersList';
 import About from './About';
 import SpecialMedicine from './SpecialMedicine';
 import MyOrders from './MyOrders';
+import MembershipPage from './MembershipPage';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/special-medicine" element={<SpecialMedicine />} />
             <Route path="/my-orders" element={<MyOrders />} />
+            <Route path="/membership" element={<MembershipPage />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminDashboard /></ProtectedRoute>} />

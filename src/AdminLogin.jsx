@@ -23,9 +23,9 @@ const AdminLogin = () => {
     if (!validate()) return;
 
     try {
-      const data = await loginUser({ name: adminUsername, password: password });
+      const data = await loginUser({ email: adminUsername, password: password });
       if (data.success) {
-        if (data.user.role !== 'Admin') {
+        if (data.user.role.toLowerCase() !== 'admin') {
           toast.error('This portal is restricted to Administrators only.');
           return;
         }

@@ -5,10 +5,10 @@
  */
 
 class Database {
-    private $host = "sql302.infinityfree.com";
-    private $db_name = "if0_41906696_pharmacy_db";
-    private $username = "if0_41906696";
-    private $password = "Project123Pro";
+    private $host = "localhost";
+    private $db_name = "pharma_network";
+    private $username = "root";
+    private $password = "";
     private $conn;
 
     public function getConnection() {

@@ -7,20 +7,60 @@ const Auth = () => {
   const navigate = useNavigate();
   const { registerUser, loginUser } = useSystemStore();
   const [isLogin, setIsLogin] = useState(true);
+  const [showForgot, setShowForgot] = useState(false);
 
   // Sign In State
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  const [loginRole, setLoginRole] = useState('');
+  const [loginErrors, setLoginErrors] = useState({});
 
   // Sign Up State
-  const [regName, setRegName] = useState('');
+  const [regRole, setRegRole] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
-  const [regRole, setRegRole] = useState('');
-  const [regLicense, setRegLicense] = useState(null);
-  const [loginErrors, setLoginErrors] = useState({});
+  
+  // Dynamic fields
+  const [regName, setRegName] = useState('');
+  const [regAddress, setRegAddress] = useState('');
+  const [regLicenseNo, setRegLicenseNo] = useState('');
+  const [regRegistrationNo, setRegRegistrationNo] = useState('');
+  const [regTerritory, setRegTerritory] = useState('');
+  
   const [regErrors, setRegErrors] = useState({});
+
+  // Forgot Password State
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotPassword, setForgotPassword] = useState('');
+  const [forgotErrors, setForgotErrors] = useState({});
+
+  const handleForgot = async (e) => {
+    e.preventDefault();
+    const errs = {};
+    if (!forgotEmail.trim()) errs.email = 'Email is required.';
+    if (!forgotPassword || forgotPassword.length < 6) errs.password = 'New password must be at least 6 characters.';
+    if (Object.keys(errs).length) { setForgotErrors(errs); return; }
+    setForgotErrors({});
+
+    try {
+        const res = await fetch('http://localhost/pharma_backend/api/forgot_password.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: forgotEmail, new_password: forgotPassword })
+        });
+        const data = await res.json();
+        if (data.success) {
+            toast.success('Password reset successfully! You can now sign in.');
+            setShowForgot(false);
+            setIsLogin(true);
+            setLoginEmail(forgotEmail);
+            setForgotPassword('');
+        } else {
+            toast.error(data.error || 'Failed to reset password.');
+        }
+    } catch (err) {
+        toast.error('Network error occurred.');
+    }
+  };
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -32,29 +72,98 @@ const Auth = () => {
 
     try {
       const data = await loginUser({ email: loginEmail, password: loginPassword });
-      if (data.success) {
-        toast.success(`Welcome, ${data.user.name}! You are now signed in.`);
-        navigate('/');
+      if (data.success && data.user) {
+        
+        // Safety status check (though backend should also reject)
+        const status = data.user.status?.toLowerCase();
+        if (data.user.role !== 'admin') {
+            if (status === 'pending') {
+                toast.error('Your account is pending admin verification');
+                return;
+            } else if (status === 'rejected') {
+                toast.error('Your account has been rejected by admin');
+                return;
+            }
+        }
+
+        toast.success(`Welcome back! You are now signed in.`);
+        
+        // Route based on role
+        const role = data.user.role?.toLowerCase();
+        if (role === 'admin') navigate('/admin');
+        else if (role === 'company' || role === 'supplier') navigate('/supplier');
+        else if (role === 'agent') navigate('/agent');
+        else if (role === 'customer') navigate('/customer');
+        else navigate('/'); // Pharmacy or fallback
       }
     } catch (err) {
       toast.error(err.message || 'Login failed. Please check your credentials.');
     }
   };
 
-  const handleSignUp = (e) => {
+  const [regLicenseFile, setRegLicenseFile] = useState(null);
+
+  const handleSignUp = async (e) => {
     e.preventDefault();
     const errs = {};
-    if (!regName.trim()) errs.regName = 'Full name is required.';
+    
+    if (!regRole) errs.regRole = 'Please select a role.';
     if (!regEmail.trim() || !/\S+@\S+\.\S+/.test(regEmail)) errs.regEmail = 'A valid email is required.';
     if (!regPassword || regPassword.length < 6) errs.regPassword = 'Password must be at least 6 characters.';
-    if (!regRole) errs.regRole = 'Please select a role.';
-    if (regRole && !regLicense) errs.regLicense = 'A license document is required for this role.';
+    
+    if (regRole) {
+        if (!regName.trim()) errs.regName = 'Name is required.';
+        if (['pharmacy', 'company', 'agent'].includes(regRole)) {
+            if (!regLicenseFile) errs.regLicenseFile = 'A verification document is required.';
+        }
+        if (regRole === 'pharmacy') {
+            if (!regLicenseNo.trim()) errs.regLicenseNo = 'License Number is required.';
+            if (!regAddress.trim()) errs.regAddress = 'Address is required.';
+        } else if (regRole === 'company') {
+            if (!regRegistrationNo.trim()) errs.regRegistrationNo = 'BR Number is required.';
+            if (!regAddress.trim()) errs.regAddress = 'Address is required.';
+        } else if (regRole === 'agent') {
+            if (!regTerritory.trim()) errs.regTerritory = 'Territory is required.';
+        } else if (regRole === 'customer') {
+            if (!regAddress.trim()) errs.regAddress = 'Address is required.';
+        }
+    }
+
     if (Object.keys(errs).length) { setRegErrors(errs); return; }
     setRegErrors({});
 
-    registerUser({ name: regName, email: regEmail, password: regPassword, role: regRole, licenseDocument: regLicense ? regLicense.name : null });
-    setRegName(''); setRegEmail(''); setRegPassword(''); setRegRole(''); setRegLicense(null);
-    toast.success('Registration submitted! Please wait for Admin approval.');
+    const formData = new FormData();
+    formData.append('email', regEmail);
+    formData.append('password', regPassword);
+    formData.append('role', regRole);
+    formData.append('name', regName);
+    formData.append('address', regAddress);
+    formData.append('license_no', regLicenseNo);
+    formData.append('registration_no', regRegistrationNo);
+    formData.append('territory', regTerritory);
+    
+    if (regLicenseFile) {
+        formData.append('license_file', regLicenseFile);
+    }
+
+    try {
+        const res = await registerUser(formData);
+        if (res && res.success) {
+            // Reset form
+            setRegEmail(''); setRegPassword(''); setRegRole(''); setRegName(''); 
+            setRegAddress(''); setRegLicenseNo(''); setRegRegistrationNo(''); setRegTerritory('');
+            setRegLicenseFile(null);
+            
+            if (res.status === 'approved' || regRole === 'customer') {
+                toast.success('Registration successful! You can now sign in.');
+            } else {
+                toast.success('Registration submitted! Please wait for Admin approval.');
+            }
+            setIsLogin(true);
+        }
+    } catch (err) {
+        toast.error(err.message || 'Registration failed.');
+    }
   };
 
   return (
@@ -64,7 +173,7 @@ const Auth = () => {
       <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
       <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-teal-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md relative z-10 my-8">
         {/* Header Section */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/30 mb-4 transition-transform hover:scale-105">
@@ -79,27 +188,66 @@ const Auth = () => {
         {/* Card Container */}
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-white p-8">
           
-          {/* Toggle Buttons */}
-          <div className="flex bg-slate-100/80 p-1 rounded-xl mb-8 relative">
-            <div 
-              className={`absolute top-1 bottom-1 w-[calc(50%-0.25rem)] bg-white rounded-lg shadow-sm transition-all duration-300 ease-out ${isLogin ? 'left-1' : 'left-[calc(50%+0.25rem)]'}`}
-            ></div>
-            <button 
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2.5 text-sm font-bold relative z-10 transition-colors ${isLogin ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Sign In
-            </button>
-            <button 
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2.5 text-sm font-bold relative z-10 transition-colors ${!isLogin ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              Create Account
-            </button>
-          </div>
+          {/* Toggle Buttons (hide if showing forgot password) */}
+          {!showForgot && (
+            <div className="flex bg-slate-100/80 p-1 rounded-xl mb-8 relative">
+              <div 
+                className={`absolute top-1 bottom-1 w-[calc(50%-0.25rem)] bg-white rounded-lg shadow-sm transition-all duration-300 ease-out ${isLogin ? 'left-1' : 'left-[calc(50%+0.25rem)]'}`}
+              ></div>
+              <button 
+                onClick={() => setIsLogin(true)}
+                className={`flex-1 py-2.5 text-sm font-bold relative z-10 transition-colors ${isLogin ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Sign In
+              </button>
+              <button 
+                onClick={() => setIsLogin(false)}
+                className={`flex-1 py-2.5 text-sm font-bold relative z-10 transition-colors ${!isLogin ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Create Account
+              </button>
+            </div>
+          )}
 
-          {/* Sign In Form */}
-          {isLogin ? (
+          {showForgot ? (
+            /* Forgot Password Form */
+            <form onSubmit={handleForgot} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-6 text-center">
+                <h3 className="text-xl font-bold text-slate-900 mb-1">Reset Password</h3>
+                <p className="text-sm text-slate-500">Enter your email and a new password.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Registered Email</label>
+                <input 
+                  type="email" 
+                  value={forgotEmail}
+                  onChange={(e) => { setForgotEmail(e.target.value); setForgotErrors(p => ({ ...p, email: '' })); }}
+                  className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${forgotErrors.email ? 'border-red-400' : 'border-slate-200'}`}
+                  placeholder="you@example.com"
+                />
+                {forgotErrors.email && <p className="text-red-500 text-xs mt-1 font-medium">{forgotErrors.email}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">New Password</label>
+                <input 
+                  type="password" 
+                  value={forgotPassword}
+                  onChange={(e) => { setForgotPassword(e.target.value); setForgotErrors(p => ({ ...p, password: '' })); }}
+                  className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${forgotErrors.password ? 'border-red-400' : 'border-slate-200'}`}
+                  placeholder="••••••••"
+                />
+                {forgotErrors.password && <p className="text-red-500 text-xs mt-1 font-medium">{forgotErrors.password}</p>}
+              </div>
+              <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl px-4 py-3.5 shadow-md shadow-blue-500/20 transform hover:-translate-y-0.5 transition-all active:scale-95 mt-6">
+                Reset Password
+              </button>
+              <div className="text-center mt-4">
+                <button type="button" onClick={() => setShowForgot(false)} className="text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors">
+                  Back to Sign In
+                </button>
+              </div>
+            </form>
+          ) : isLogin ? (
             <form onSubmit={handleSignIn} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email Address</label>
@@ -123,32 +271,13 @@ const Auth = () => {
                 />
                 {loginErrors.loginPassword && <p className="text-red-500 text-xs mt-1 font-medium">{loginErrors.loginPassword}</p>}
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Portal Role</label>
-                <div className="relative">
-                  <select 
-                    value={loginRole}
-                    onChange={(e) => { setLoginRole(e.target.value); setLoginErrors(p => ({ ...p, loginRole: '' })); }}
-                    className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer ${loginErrors.loginRole ? 'border-red-400' : 'border-slate-200'}`}
-                  >
-                    <option value="" disabled>Select your role</option>
-                    <option value="Pharmacy">Pharmacy</option>
-                    <option value="Supplier">Supplier</option>
-                    <option value="Medical Agent">Medical Agent</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                  </div>
-                </div>
-                {loginErrors.loginRole && <p className="text-red-500 text-xs mt-1 font-medium">{loginErrors.loginRole}</p>}
-              </div>
               
               <div className="flex items-center justify-between mt-2">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
                   <span className="text-sm text-slate-600">Remember me</span>
                 </label>
-                <a href="#" className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">Forgot password?</a>
+                <button type="button" onClick={() => setShowForgot(true)} className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">Forgot password?</button>
               </div>
 
               <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl px-4 py-3.5 shadow-md shadow-blue-500/20 transform hover:-translate-y-0.5 transition-all active:scale-95 mt-6">
@@ -158,17 +287,44 @@ const Auth = () => {
           ) : (
             /* Sign Up Form */
             <form onSubmit={handleSignUp} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Full Name</label>
-                <input 
-                  type="text" 
-                  value={regName}
-                  onChange={(e) => { setRegName(e.target.value); setRegErrors(p => ({ ...p, regName: '' })); }}
-                  className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regName ? 'border-red-400' : 'border-slate-200'}`}
-                  placeholder="John Doe"
-                />
-                {regErrors.regName && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regName}</p>}
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Account Role</label>
+                <div className="relative">
+                  <select 
+                    value={regRole}
+                    onChange={(e) => { setRegRole(e.target.value); setRegErrors(p => ({ ...p, regRole: '' })); }}
+                    className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer ${regErrors.regRole ? 'border-red-400' : 'border-slate-200'}`}
+                  >
+                    <option value="" disabled>Select a role</option>
+                    <option value="pharmacy">Pharmacy</option>
+                    <option value="company">Company</option>
+                    <option value="agent">Medical Agent</option>
+                    <option value="customer">Customer</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
+                {regErrors.regRole && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regRole}</p>}
               </div>
+
+              {regRole && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                        {regRole === 'company' ? 'Company Name' : regRole === 'pharmacy' ? 'Pharmacy Name' : 'Full Name'}
+                    </label>
+                    <input 
+                    type="text" 
+                    value={regName}
+                    onChange={(e) => { setRegName(e.target.value); setRegErrors(p => ({ ...p, regName: '' })); }}
+                    className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regName ? 'border-red-400' : 'border-slate-200'}`}
+                    placeholder="Enter name"
+                    />
+                    {regErrors.regName && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regName}</p>}
+                  </div>
+              )}
+
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email Address</label>
                 <input 
@@ -180,6 +336,7 @@ const Auth = () => {
                 />
                 {regErrors.regEmail && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regEmail}</p>}
               </div>
+
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
                 <input 
@@ -191,54 +348,101 @@ const Auth = () => {
                 />
                 {regErrors.regPassword && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regPassword}</p>}
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Account Role</label>
-                <div className="relative">
-                  <select 
-                    required
-                    value={regRole}
-                    onChange={(e) => setRegRole(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-2.5 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all cursor-pointer"
-                  >
-                    <option value="" disabled>Select a role</option>
-                    <option value="Pharmacy">Pharmacy</option>
-                    <option value="Supplier">Supplier</option>
-                    <option value="Medical Agent">Medical Agent</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                  </div>
-                </div>
-              </div>
 
-              {regRole && (
-                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Upload License Document</label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl hover:border-blue-400 hover:bg-blue-50/50 transition-colors cursor-pointer bg-slate-50 relative">
-                    <div className="space-y-1 text-center">
-                      <svg className="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <div className="flex text-sm text-slate-600 justify-center">
-                        <label htmlFor="file-upload" className="relative cursor-pointer bg-transparent rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
-                          <span>Upload a file</span>
-                          <input 
-                            id="file-upload" 
-                            name="file-upload" 
-                            type="file" 
-                            className="sr-only" 
-                            required 
-                            onChange={(e) => setRegLicense(e.target.files[0])}
-                          />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
+              {/* Dynamic Role Fields */}
+              {regRole === 'pharmacy' && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">License Number</label>
+                        <input 
+                            type="text" 
+                            value={regLicenseNo}
+                            onChange={(e) => { setRegLicenseNo(e.target.value); setRegErrors(p => ({ ...p, regLicenseNo: '' })); }}
+                            className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regLicenseNo ? 'border-red-400' : 'border-slate-200'}`}
+                            placeholder="PHARM-XXXX"
+                        />
+                        {regErrors.regLicenseNo && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regLicenseNo}</p>}
                       </div>
-                      <p className="text-xs text-slate-500">
-                        {regLicense ? regLicense.name : 'PDF, PNG, JPG up to 10MB'}
-                      </p>
-                    </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Physical Address</label>
+                        <textarea 
+                            value={regAddress}
+                            onChange={(e) => { setRegAddress(e.target.value); setRegErrors(p => ({ ...p, regAddress: '' })); }}
+                            className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regAddress ? 'border-red-400' : 'border-slate-200'}`}
+                            placeholder="Enter full address"
+                            rows="2"
+                        ></textarea>
+                        {regErrors.regAddress && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regAddress}</p>}
+                      </div>
                   </div>
-                </div>
+              )}
+
+              {regRole === 'company' && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Business Registration (BR) Number</label>
+                        <input 
+                            type="text" 
+                            value={regRegistrationNo}
+                            onChange={(e) => { setRegRegistrationNo(e.target.value); setRegErrors(p => ({ ...p, regRegistrationNo: '' })); }}
+                            className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regRegistrationNo ? 'border-red-400' : 'border-slate-200'}`}
+                            placeholder="BR-XXXX"
+                        />
+                        {regErrors.regRegistrationNo && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regRegistrationNo}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Company Address</label>
+                        <textarea 
+                            value={regAddress}
+                            onChange={(e) => { setRegAddress(e.target.value); setRegErrors(p => ({ ...p, regAddress: '' })); }}
+                            className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regAddress ? 'border-red-400' : 'border-slate-200'}`}
+                            placeholder="Enter company address"
+                            rows="2"
+                        ></textarea>
+                        {regErrors.regAddress && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regAddress}</p>}
+                      </div>
+                  </div>
+              )}
+
+              {regRole === 'agent' && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Territory</label>
+                      <input 
+                          type="text" 
+                          value={regTerritory}
+                          onChange={(e) => { setRegTerritory(e.target.value); setRegErrors(p => ({ ...p, regTerritory: '' })); }}
+                          className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regTerritory ? 'border-red-400' : 'border-slate-200'}`}
+                          placeholder="e.g. Western Province"
+                      />
+                      {regErrors.regTerritory && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regTerritory}</p>}
+                  </div>
+              )}
+
+              {regRole === 'customer' && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Delivery Address</label>
+                      <textarea 
+                          value={regAddress}
+                          onChange={(e) => { setRegAddress(e.target.value); setRegErrors(p => ({ ...p, regAddress: '' })); }}
+                          className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regAddress ? 'border-red-400' : 'border-slate-200'}`}
+                          placeholder="Enter delivery address"
+                          rows="2"
+                      ></textarea>
+                      {regErrors.regAddress && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regAddress}</p>}
+                  </div>
+              )}
+
+              {['pharmacy', 'company', 'agent'].includes(regRole) && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Verification Document (Image/PDF)</label>
+                      <input 
+                          type="file" 
+                          accept="image/*, .pdf"
+                          onChange={(e) => { setRegLicenseFile(e.target.files[0]); setRegErrors(p => ({ ...p, regLicenseFile: '' })); }}
+                          className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${regErrors.regLicenseFile ? 'border-red-400' : 'border-slate-200'}`}
+                      />
+                      {regErrors.regLicenseFile && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regLicenseFile}</p>}
+                  </div>
               )}
 
               <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl px-4 py-3.5 shadow-md transform hover:-translate-y-0.5 transition-all active:scale-95 mt-6">

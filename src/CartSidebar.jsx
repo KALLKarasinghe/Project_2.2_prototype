@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useSystemStore } from './SystemContext';
 import PaymentModal from './PaymentModal';
+import toast from 'react-hot-toast';
 
 const CartSidebar = () => {
-  const { cart, cartTotal, isCartOpen, toggleCart, removeFromCart, updateCartQty, clearCart } = useSystemStore();
+  const { cart, cartTotal, isCartOpen, toggleCart, removeFromCart, updateCartQty, clearCart, currentUser, fetchCart } = useSystemStore();
   const [showPayment, setShowPayment] = useState(false);
 
   return (
