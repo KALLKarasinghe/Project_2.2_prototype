@@ -1,7 +1,7 @@
 <?php
 /**
  * Orders API
- * Adapted for flat orders table: id, medicine_id, pharmacy_id, quantity, status
+ * Adapted for flat orders table: id, product_id, pharmacy_id, quantity, status
  */
 require_once __DIR__ . '/../config/cors.php';
 require_once __DIR__ . '/../config/database.php';
@@ -24,25 +24,31 @@ switch ($method) {
 
         try {
             if ($role === 'pharmacy') {
-                // Pharmacy sees their own orders, joined with medicine and supplier info
-                $sql = "SELECT o.id, o.medicine_id, o.pharmacy_id, o.quantity, o.status, o.created_at, o.transaction_id,
-                               m.name as medicine_name, m.brand, m.price,
-                               m.supplier_id as company_id,
-                               u.name as company_name
+                // Pharmacy sees their own orders, joined with product and supplier info
+                $sql = "SELECT o.id, o.product_id as medicine_id, o.pharmacy_id, o.quantity, o.status, o.created_at, o.transaction_id,
+                               pr.name as medicine_name, pr.brand, i.price,
+                               pr.supplier_id as company_id,
+                               u.name as company_name,
+                               pm.status as payment_status, pm.payment_method
                         FROM orders o
-                        JOIN medicines m ON o.medicine_id = m.id
-                        LEFT JOIN users u ON m.supplier_id = u.id
+                        JOIN products pr ON o.product_id = pr.id
+                        JOIN inventory i ON pr.id = i.product_id
+                        LEFT JOIN users u ON pr.supplier_id = u.id
+                        LEFT JOIN payments pm ON o.id = pm.order_id
                         WHERE o.pharmacy_id = :uid 
                         ORDER BY o.id DESC";
             } else if ($role === 'supplier') {
-                // Supplier sees orders for their medicines
-                $sql = "SELECT o.id, o.medicine_id, o.pharmacy_id, o.quantity, o.status, o.created_at, o.transaction_id,
-                               m.name as medicine_name, m.brand, m.price,
-                               p.name as pharmacy_name
+                // Supplier sees orders for their products
+                $sql = "SELECT o.id, o.product_id as medicine_id, o.pharmacy_id, o.quantity, o.status, o.created_at, o.transaction_id,
+                               pr.name as medicine_name, pr.brand, i.price,
+                               ph.name as pharmacy_name,
+                               pm.status as payment_status, pm.payment_method
                         FROM orders o
-                        JOIN medicines m ON o.medicine_id = m.id
-                        JOIN users p ON o.pharmacy_id = p.id
-                        WHERE m.supplier_id = :uid 
+                        JOIN products pr ON o.product_id = pr.id
+                        JOIN inventory i ON pr.id = i.product_id
+                        JOIN users ph ON o.pharmacy_id = ph.id
+                        LEFT JOIN payments pm ON o.id = pm.order_id
+                        WHERE pr.supplier_id = :uid 
                         ORDER BY o.id DESC";
             } else {
                 http_response_code(400);
@@ -71,6 +77,8 @@ switch ($method) {
                     "transaction_id" => isset($order['transaction_id']) ? $order['transaction_id'] : null,
                     "company_name" => isset($order['company_name']) ? $order['company_name'] : (isset($order['pharmacy_name']) ? $order['pharmacy_name'] : 'Unknown'),
                     "total_amount" => $total_amount,
+                    "payment_status" => $order['payment_status'] ?? 'N/A',
+                    "payment_method" => $order['payment_method'] ?? 'N/A',
                     "items" => [
                         [
                             "generic_name" => $order['medicine_name'],
@@ -114,14 +122,15 @@ switch ($method) {
             $db->beginTransaction();
 
             // Insert one order row per cart item (flat table structure)
-            $stmt = $db->prepare("INSERT INTO orders (medicine_id, pharmacy_id, quantity, status) 
+            $stmt = $db->prepare("INSERT INTO orders (product_id, pharmacy_id, quantity, status) 
                                   VALUES (:mid, :pid, :qty, 'Pending')");
             
-            $stockStmt = $db->prepare("UPDATE medicines SET stock = GREATEST(0, stock - :qty) WHERE id = :mid");
+            $stockStmt = $db->prepare("UPDATE inventory SET stock = GREATEST(0, stock - :qty) WHERE product_id = :mid");
 
             $order_ids = [];
             foreach ($cart_items as $item) {
-                $med_id = $item['medicine_id'] ?? null;
+                // frontend still uses medicine_id internally
+                $med_id = $item['medicine_id'] ?? $item['id'] ?? null; 
                 $qty = $item['quantity'] ?? 0;
 
                 if (!$med_id || !$qty) {
@@ -180,7 +189,7 @@ switch ($method) {
 
         try {
             // Fetch current order status
-            $stmt = $db->prepare("SELECT status, medicine_id, quantity, pharmacy_id FROM orders WHERE id = :oid");
+            $stmt = $db->prepare("SELECT status, product_id, quantity, pharmacy_id FROM orders WHERE id = :oid");
             $stmt->execute([':oid' => $order_id]);
             $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -215,10 +224,10 @@ switch ($method) {
 
             // If cancelling/rejecting, restore the stock
             if (in_array($dbStatus, ['Rejected']) && $order['status'] !== 'Rejected') {
-                $restStmt = $db->prepare("UPDATE medicines SET stock = stock + :qty WHERE id = :mid");
+                $restStmt = $db->prepare("UPDATE inventory SET stock = stock + :qty WHERE product_id = :mid");
                 $restStmt->execute([
                     ':qty' => $order['quantity'],
-                    ':mid' => $order['medicine_id']
+                    ':mid' => $order['product_id']
                 ]);
             }
 

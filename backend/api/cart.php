@@ -30,17 +30,18 @@ switch ($method) {
                         uc.user_id,
                         uc.medicine_id,
                         uc.quantity,
-                        m.name,
-                        m.brand,
-                        m.price,
-                        m.stock,
-                        m.expire_date as expireDate,
-                        m.description,
-                        m.supplier_id as company_id,
+                        pr.name,
+                        pr.brand,
+                        i.price,
+                        i.stock,
+                        i.expire_date as expireDate,
+                        pr.description,
+                        pr.supplier_id as company_id,
                         u.name as company_name
                     FROM user_cart uc
-                    JOIN medicines m ON uc.medicine_id = m.id
-                    LEFT JOIN users u ON m.supplier_id = u.id
+                    JOIN products pr ON uc.medicine_id = pr.id
+                    JOIN inventory i ON pr.id = i.product_id
+                    LEFT JOIN users u ON pr.supplier_id = u.id
                     WHERE uc.user_id = :uid
                     ORDER BY uc.created_at DESC";
 

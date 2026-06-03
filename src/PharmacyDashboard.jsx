@@ -11,7 +11,7 @@ const PharmacyDashboard = () => {
   useEffect(() => {
     const fetchMedicines = async () => {
       try {
-        const res = await fetch('http://localhost/pharma_backend/api/medicines.php?role=pharmacy');
+        const res = await fetch('http://localhost/pharma_backend/api/products.php?role=pharmacy');
         const data = await res.json();
         if (data.success) {
           setMedicines(data.data);

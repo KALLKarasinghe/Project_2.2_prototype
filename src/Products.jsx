@@ -74,26 +74,27 @@ const Products = () => {
           </div>
         </div>
 
-        {/* Mobile Search */}
-        <div className="mb-6 sm:hidden">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search inventory..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-slate-900 focus:ring-2 focus:ring-blue-500 transition-all pl-12 shadow-sm"
-            />
-            <svg className="w-5 h-5 absolute left-4 top-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          </div>
-        </div>
-
         {/* Sidebar + Product Grid layout */}
         <div className="flex flex-col md:flex-row gap-8">
 
           {/* --- Left Filter Sidebar --- */}
-          <aside className="w-full md:w-1/4 h-fit bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sticky top-24">
-            <div className="flex justify-between items-center mb-5">
+          <aside className="w-full md:w-1/4 h-fit bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sticky top-24 z-10">
+            
+            {/* Unified Search Bar */}
+            <div className="mb-6">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all pl-10 text-sm"
+                />
+                <svg className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center mb-5 pt-4 border-t border-slate-100">
               <h3 className="font-bold text-slate-800 text-base">Filter by Brand</h3>
               {selectedBrands.length > 0 && (
                 <button

@@ -31,7 +31,7 @@ try {
     }
 
     // Update password
-    $hash = password_hash($new_password, PASSWORD_BCRYPT);
+    $hash = password_hash($new_password, PASSWORD_ARGON2ID);
     $upd = $db->prepare("UPDATE users SET password = :hash WHERE email = :email");
     $upd->execute([':hash' => $hash, ':email' => $email]);
 

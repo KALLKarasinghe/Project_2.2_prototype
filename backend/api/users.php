@@ -64,7 +64,7 @@ switch ($method) {
             $stmt->execute([
                 ':name'     => $data['name'],
                 ':email'    => $data['email'] ?? null,
-                ':password' => $data['password'],
+                ':password' => password_hash($data['password'], PASSWORD_ARGON2ID),
                 ':role'     => $data['role'],
                 ':phone'    => $data['phone'] ?? null,
                 ':address'  => $data['address'] ?? null,

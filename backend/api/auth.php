@@ -81,8 +81,8 @@ try {
         // Default status: customers are automatically approved, others are pending
         $status = ($role === 'customer') ? 'approved' : 'pending';
 
-        // Hash the password securely
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        // Hash the password securely using Argon2id
+        $hashed_password = password_hash($password, PASSWORD_ARGON2ID);
 
         // Start transaction to ensure both user and details are inserted together
         $db->beginTransaction();

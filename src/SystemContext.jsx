@@ -52,7 +52,7 @@ export const SystemProvider = ({ children }) => {
   // ─── Fetch helpers (wrapped in useCallback) ─────────────
   const fetchMedicines = useCallback(async () => {
     try {
-      const res = await api('medicines.php');
+      const res = await api('products.php');
       const items = res.data || res;
       // Backend now returns columns aliased to match frontend expectations
       const mapped = (Array.isArray(items) ? items : []).map(med => ({
@@ -288,7 +288,7 @@ export const SystemProvider = ({ children }) => {
   // ─── Medicines ──────────────────────────────────────────
   const addMedicine = async (medicineData) => {
     try {
-      await api('medicines.php', {
+      await api('products.php', {
         method: 'POST',
         body: JSON.stringify(medicineData),
       });

@@ -1,82 +1,94 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const SupplierAnalytics = ({ currentUser, setActiveTab }) => {
-  const [hasPremium, setHasPremium] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [salesData, setSalesData] = useState([]);
+  const [aiInsight, setAiInsight] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
-  useEffect(() => {
-    const checkSub = async () => {
-      try {
-        const res = await fetch(`http://localhost/pharma_backend/api/subscription.php?user_id=${currentUser.id}`);
-        const data = await res.json();
-        if (data.success && data.data?.status === 'Active') {
-          setHasPremium(true);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+  const handleGenerateAiInsights = async () => {
+    setIsAiLoading(true);
+    try {
+      const res = await fetch(`http://localhost/pharma_backend/api/ai_sales_analytics.php?supplier_id=${currentUser.id}`);
+      const data = await res.json();
+      if (data.success) {
+        setSalesData(data.data.chartData);
+        setAiInsight(data.data.insight);
+        toast.success('AI Insights Generated Successfully!');
+      } else {
+        toast.error(data.message || data.error || 'Failed to fetch AI insights');
       }
-    };
-    checkSub();
-  }, [currentUser]);
-
-  if (loading) return <div className="p-8 text-center text-slate-500">Checking premium access...</div>;
-
-  if (!hasPremium) {
-    return (
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-10 text-center max-w-2xl mx-auto mt-10 animate-in fade-in duration-300">
-        <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-        </div>
-        <h2 className="text-2xl font-black text-slate-900 mb-3">Premium Analytics Locked</h2>
-        <p className="text-slate-500 mb-8 leading-relaxed">
-          Unlock advanced sales forecasting, inventory demand trends, and detailed revenue reports with a platform membership.
-        </p>
-        <button 
-          onClick={() => setActiveTab('subscriptions')} 
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl transition-all active:scale-95 shadow-sm inline-flex items-center gap-2"
-        >
-          View Membership Plans
-        </button>
-      </div>
-    );
-  }
+    } catch (err) {
+      toast.error('Network error occurred while fetching AI insights.');
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center mb-8 pb-6 border-b border-slate-100">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 animate-in fade-in duration-300">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 pb-6 border-b border-slate-100 gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900">Advanced Analytics</h2>
-          <p className="text-sm text-slate-500 mt-1">Premium feature: Real-time insights for your business.</p>
+          <h2 className="text-xl font-extrabold text-slate-900">AI-Powered Sales Analytics</h2>
+          <p className="text-sm text-slate-500 mt-1">Generate AI insights and predictions based on your historical sales data.</p>
         </div>
-        <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5">
-          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-          Premium Active
-        </span>
+        <button 
+          onClick={handleGenerateAiInsights}
+          disabled={isAiLoading}
+          className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-2.5 px-5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-70 shrink-0"
+        >
+          {isAiLoading ? (
+            <>
+              <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              Generating...
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              Generate AI Insights
+            </>
+          )}
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-6">
-          <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">Demand Forecast</p>
-          <p className="text-2xl font-black text-slate-900">+24%</p>
-          <p className="text-xs text-slate-500 mt-1">Expected growth next month</p>
+      {aiInsight && (
+        <div className="mb-8 p-5 bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-gradient-to-br from-indigo-200 to-purple-200 rounded-full blur-2xl opacity-50"></div>
+          <div className="flex items-start gap-4 relative z-10">
+            <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center shrink-0">
+              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-wider mb-1">Gemini AI Insight</h3>
+              <p className="text-indigo-800 font-medium leading-relaxed">{aiInsight}</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-6">
-          <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Inventory Health</p>
-          <p className="text-2xl font-black text-slate-900">Optimal</p>
-          <p className="text-xs text-slate-500 mt-1">Based on current burn rate</p>
-        </div>
-        <div className="bg-purple-50/50 border border-purple-100 rounded-2xl p-6">
-          <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">Market Share</p>
-          <p className="text-2xl font-black text-slate-900">12.4%</p>
-          <p className="text-xs text-slate-500 mt-1">In your selected categories</p>
-        </div>
-      </div>
+      )}
 
-      <div className="bg-slate-50 rounded-2xl h-64 border border-slate-200 border-dashed flex items-center justify-center">
-         <p className="text-slate-400 font-medium">Detailed Charts & Graphs Area (Pro Version)</p>
-      </div>
+      {salesData.length > 0 ? (
+        <div className="h-80 w-full mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={salesData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+              <XAxis dataKey="name" stroke="#94a3b8" tick={{ fill: '#64748b' }} axisLine={false} tickLine={false} />
+              <YAxis stroke="#94a3b8" tick={{ fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(value) => `Rs. ${value}`} width={80} />
+              <Tooltip 
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                formatter={(value, name) => [`Rs. ${value.toFixed(2)}`, name === 'sales' ? 'Actual Sales' : 'Predicted Sales']}
+              />
+              <Legend iconType="circle" />
+              <Line type="monotone" dataKey="sales" name="Actual Sales" stroke="#4f46e5" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6, stroke: '#4f46e5', strokeWidth: 2, fill: '#fff' }} connectNulls />
+              <Line type="monotone" dataKey="predicted_sales" name="AI Prediction" stroke="#9333ea" strokeWidth={3} strokeDasharray="5 5" dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6, stroke: '#9333ea', strokeWidth: 2, fill: '#fff' }} connectNulls />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className="bg-slate-50 rounded-2xl h-64 border border-slate-200 border-dashed flex items-center justify-center">
+          <p className="text-slate-400 font-medium">Click the button above to generate your AI Sales Analytics.</p>
+        </div>
+      )}
     </div>
   );
 };
