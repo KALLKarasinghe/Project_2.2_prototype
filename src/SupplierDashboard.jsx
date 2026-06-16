@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSystemStore } from './SystemContext';
 import toast from 'react-hot-toast';
 import SupplierAnalytics from './SupplierAnalytics';
+import InvoiceModal from './InvoiceModal';
 
 const EmptyState = ({ icon, title, description }) => (
   <div className="text-center py-16">
@@ -16,6 +17,9 @@ const SupplierDashboard = () => {
   const navigate = useNavigate();
   const { currentUser, orders, updateOrderStatus, logoutUser } = useSystemStore();
   const [activeTab, setActiveTab] = useState('inventory');
+  const [activeOrderTab, setActiveOrderTab] = useState('All');
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formErrors, setFormErrors] = useState({});
@@ -351,6 +355,15 @@ const SupplierDashboard = () => {
                         {(order.status?.toLowerCase() === 'delivered' || order.status?.toLowerCase() === 'cancelled') && (
                           <span className="text-slate-400 font-semibold text-xs py-2">Order Finalized</span>
                         )}
+                        {['confirmed', 'shipped', 'delivered'].includes(order.status?.toLowerCase()) && (
+                          <button
+                            onClick={() => { setSelectedInvoiceOrder(order); setInvoiceModalOpen(true); }}
+                            className="text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl font-bold text-xs transition-colors flex items-center gap-1.5 ml-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            View Invoice
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -365,6 +378,13 @@ const SupplierDashboard = () => {
           )}
         </div>
       </main>
+
+      <InvoiceModal 
+        isOpen={invoiceModalOpen}
+        onClose={() => setInvoiceModalOpen(false)}
+        order={selectedInvoiceOrder}
+        currentUserRole="supplier"
+      />
     </div>
   );
 };

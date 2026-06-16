@@ -7,6 +7,18 @@ const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch(`http://localhost/pharma_backend/api/notifications.php?user_id=${currentUser.id}`);
+      const data = await res.json();
+      if (data.success) {
+        setNotifications(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications', err);
+    }
+  };
+
   useEffect(() => {
     if (currentUser) {
       fetchNotifications();
@@ -24,18 +36,6 @@ const NotificationBell = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const fetchNotifications = async () => {
-    try {
-      const res = await fetch(`http://localhost/pharma_backend/api/notifications.php?user_id=${currentUser.id}`);
-      const data = await res.json();
-      if (data.success) {
-        setNotifications(data.data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch notifications', err);
-    }
-  };
 
   const markAsRead = async (id) => {
     try {

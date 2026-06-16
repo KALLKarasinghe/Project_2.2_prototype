@@ -2,12 +2,17 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSystemStore } from './SystemContext';
 import toast from 'react-hot-toast';
+import TermsModal from './TermsModal';
 
 const Auth = () => {
   const navigate = useNavigate();
   const { registerUser, loginUser } = useSystemStore();
   const [isLogin, setIsLogin] = useState(true);
   const [showForgot, setShowForgot] = useState(false);
+
+  // Terms and Conditions State
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   // Sign In State
   const [loginEmail, setLoginEmail] = useState('');
@@ -110,6 +115,7 @@ const Auth = () => {
     if (!regRole) errs.regRole = 'Please select a role.';
     if (!regEmail.trim() || !/\S+@\S+\.\S+/.test(regEmail)) errs.regEmail = 'A valid email is required.';
     if (!regPassword || regPassword.length < 6) errs.regPassword = 'Password must be at least 6 characters.';
+    if (!termsAccepted) errs.termsAccepted = 'You must agree to the Terms and Conditions.';
     
     if (regRole) {
         if (!regName.trim()) errs.regName = 'Name is required.';
@@ -123,6 +129,7 @@ const Auth = () => {
             if (!regRegistrationNo.trim()) errs.regRegistrationNo = 'BR Number is required.';
             if (!regAddress.trim()) errs.regAddress = 'Address is required.';
         } else if (regRole === 'agent') {
+            if (!regLicenseNo.trim()) errs.regLicenseNo = 'SLMC Number is required.';
             if (!regTerritory.trim()) errs.regTerritory = 'Territory is required.';
         } else if (regRole === 'customer') {
             if (!regAddress.trim()) errs.regAddress = 'Address is required.';
@@ -154,8 +161,10 @@ const Auth = () => {
             setRegAddress(''); setRegLicenseNo(''); setRegRegistrationNo(''); setRegTerritory('');
             setRegLicenseFile(null);
             
-            if (res.status === 'approved' || regRole === 'customer') {
+            if (res.status === 'Active' || res.status === 'approved' || regRole === 'customer') {
                 toast.success('Registration successful! You can now sign in.');
+            } else if (res.auto_verified) {
+                toast.success('Automatic verification passed! Pending manual Admin approval for full activation.');
             } else {
                 toast.success('Registration submitted! Please wait for Admin approval.');
             }
@@ -405,16 +414,29 @@ const Auth = () => {
               )}
 
               {regRole === 'agent' && (
-                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Territory</label>
-                      <input 
-                          type="text" 
-                          value={regTerritory}
-                          onChange={(e) => { setRegTerritory(e.target.value); setRegErrors(p => ({ ...p, regTerritory: '' })); }}
-                          className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regTerritory ? 'border-red-400' : 'border-slate-200'}`}
-                          placeholder="e.g. Western Province"
-                      />
-                      {regErrors.regTerritory && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regTerritory}</p>}
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">
+                      <div>
+                          <label className="block text-sm font-semibold text-slate-700 mb-1.5">SLMC Number</label>
+                          <input 
+                              type="text" 
+                              value={regLicenseNo}
+                              onChange={(e) => { setRegLicenseNo(e.target.value); setRegErrors(p => ({ ...p, regLicenseNo: '' })); }}
+                              className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regLicenseNo ? 'border-red-400' : 'border-slate-200'}`}
+                              placeholder="SLMC-XXXX"
+                          />
+                          {regErrors.regLicenseNo && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regLicenseNo}</p>}
+                      </div>
+                      <div>
+                          <label className="block text-sm font-semibold text-slate-700 mb-1.5">Territory</label>
+                          <input 
+                              type="text" 
+                              value={regTerritory}
+                              onChange={(e) => { setRegTerritory(e.target.value); setRegErrors(p => ({ ...p, regTerritory: '' })); }}
+                              className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regTerritory ? 'border-red-400' : 'border-slate-200'}`}
+                              placeholder="e.g. Western Province"
+                          />
+                          {regErrors.regTerritory && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regTerritory}</p>}
+                      </div>
                   </div>
               )}
 
@@ -445,6 +467,21 @@ const Auth = () => {
                   </div>
               )}
 
+              <div className="flex flex-col gap-1 mt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={termsAccepted}
+                    onChange={(e) => { setTermsAccepted(e.target.checked); setRegErrors(p => ({ ...p, termsAccepted: '' })); }}
+                    className={`w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 ${regErrors.termsAccepted ? 'border-red-400 ring-2 ring-red-400 ring-opacity-50' : ''}`} 
+                  />
+                  <span className="text-sm text-slate-600">
+                    I agree to the <button type="button" onClick={() => setIsTermsModalOpen(true)} className="text-blue-600 font-semibold hover:underline">Terms and Conditions</button>
+                  </span>
+                </label>
+                {regErrors.termsAccepted && <p className="text-red-500 text-xs font-medium ml-6">{regErrors.termsAccepted}</p>}
+              </div>
+
               <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl px-4 py-3.5 shadow-md transform hover:-translate-y-0.5 transition-all active:scale-95 mt-6">
                 Submit Registration
               </button>
@@ -460,6 +497,11 @@ const Auth = () => {
           </Link>
         </div>
       </div>
+      <TermsModal 
+        isOpen={isTermsModalOpen} 
+        onClose={() => setIsTermsModalOpen(false)} 
+        onAccept={() => { setTermsAccepted(true); setRegErrors(p => ({ ...p, termsAccepted: '' })); }} 
+      />
     </div>
   );
 };

@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSystemStore } from './SystemContext';
 import Navbar from './Navbar';
 import CartSidebar from './CartSidebar';
 import { Link } from 'react-router-dom';
 import RateSupplierModal from './RateSupplierModal';
-import { useState } from 'react';
+import InvoiceModal from './InvoiceModal';
 
 const MyOrders = () => {
   const { orders, currentUser, updateOrderStatus } = useSystemStore();
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const [selectedOrderToRate, setSelectedOrderToRate] = useState(null);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
 
   const myOrders = orders;
 
@@ -123,13 +125,32 @@ const MyOrders = () => {
                 )}
                 
                 {order.status?.toLowerCase() === 'delivered' && (
-                  <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end gap-3">
+                    <button
+                      onClick={() => { setSelectedInvoiceOrder(order); setInvoiceModalOpen(true); }}
+                      className="text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl font-bold text-sm transition-colors flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                      View Invoice
+                    </button>
                     <button
                       onClick={() => { setSelectedOrderToRate(order); setRatingModalOpen(true); }}
                       className="text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-4 py-2 rounded-xl font-bold text-sm transition-colors flex items-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                       Rate Supplier
+                    </button>
+                  </div>
+                )}
+                
+                {['approved', 'shipped'].includes(order.status?.toLowerCase()) && (
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
+                    <button
+                      onClick={() => { setSelectedInvoiceOrder(order); setInvoiceModalOpen(true); }}
+                      className="text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl font-bold text-sm transition-colors flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                      View Invoice
                     </button>
                   </div>
                 )}
@@ -145,6 +166,12 @@ const MyOrders = () => {
           currentUser={currentUser}
         />
       </main>
+      <InvoiceModal 
+        isOpen={invoiceModalOpen}
+        onClose={() => setInvoiceModalOpen(false)}
+        order={selectedInvoiceOrder}
+        currentUserRole="pharmacy"
+      />
     </div>
   );
 };

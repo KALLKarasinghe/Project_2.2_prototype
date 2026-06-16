@@ -78,8 +78,33 @@ try {
             }
         }
 
-        // Default status: customers are automatically approved, others are pending
-        $status = ($role === 'customer') ? 'approved' : 'pending';
+        $auto_verified = false;
+        $status = 'Pending';
+        
+        $license_no = $data['license_no'] ?? '';
+        $registration_no = $data['registration_no'] ?? '';
+
+        if ($role === 'company') {
+            $check_stmt = $db->prepare("SELECT id FROM mock_company_registry WHERE br_number = :br LIMIT 1");
+            $check_stmt->execute([':br' => $registration_no]);
+            if ($check_stmt->fetch() && $uploaded_file_path) {
+                $auto_verified = true;
+            }
+        } elseif ($role === 'agent') {
+            $check_stmt = $db->prepare("SELECT id FROM mock_slmc_database WHERE slmc_number = :slmc LIMIT 1");
+            $check_stmt->execute([':slmc' => $license_no]);
+            if ($check_stmt->fetch() && $uploaded_file_path) {
+                $auto_verified = true;
+            }
+        } elseif ($role === 'pharmacy') {
+            $check_stmt = $db->prepare("SELECT id FROM mock_nmra_database WHERE slmc_number = :slmc LIMIT 1");
+            $check_stmt->execute([':slmc' => $license_no]);
+            if ($check_stmt->fetch() && $uploaded_file_path) {
+                $auto_verified = true;
+            }
+        } elseif ($role === 'customer') {
+            $status = 'Active';
+        }
 
         // Hash the password securely using Argon2id
         $hashed_password = password_hash($password, PASSWORD_ARGON2ID);
@@ -101,7 +126,7 @@ try {
         ]);
         
         $db->commit();
-        echo json_encode(["success" => true, "message" => "Registration successful.", "status" => $status]);
+        echo json_encode(["success" => true, "message" => "Registration successful.", "status" => $status, "auto_verified" => $auto_verified]);
 
     } else {
         // --- Login Logic ---

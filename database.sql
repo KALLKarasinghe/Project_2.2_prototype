@@ -124,6 +124,43 @@ CREATE TABLE special_medicines (
 
 
 -- =====================================================
+-- MOCK REGISTRY TABLES FOR VERIFICATION
+-- =====================================================
+
+CREATE TABLE mock_company_registry (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    br_number VARCHAR(50) UNIQUE NOT NULL,
+    company_name VARCHAR(200) NOT NULL,
+    address VARCHAR(255) DEFAULT NULL,
+    owner_name VARCHAR(150) DEFAULT NULL,
+    registered_date DATE DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE mock_slmc_database (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    slmc_number VARCHAR(50) UNIQUE NOT NULL,
+    agent_name VARCHAR(150) NOT NULL,
+    qualifications VARCHAR(255) DEFAULT NULL,
+    district VARCHAR(100) DEFAULT NULL,
+    status ENUM('Active', 'Suspended') NOT NULL DEFAULT 'Active'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =====================================================
+-- SEED DATA - Mock Registries
+-- =====================================================
+INSERT INTO mock_company_registry (br_number, company_name, address, owner_name, registered_date) VALUES
+('BR-1001', 'Hemas Pharmaceuticals', 'Colombo 02', 'Hemas Holdings', '2010-01-15'),
+('BR-1002', 'Baurs & Co', 'Colombo 01', 'A. Baur', '2005-06-20'),
+('BR-1003', 'Biogenics Lanka', 'Colombo 08', 'Biogenics Pvt Ltd', '2015-08-10'),
+('BR-1004', 'Medica Importers', 'Dehiwala', 'Medica Holdings', '2018-03-25');
+
+INSERT INTO mock_slmc_database (slmc_number, agent_name, qualifications, district, status) VALUES
+('SLMC-5001', 'Dr. S. Wijesinghe', 'MBBS, MD', 'Anuradhapura', 'Active'),
+('SLMC-5002', 'Medical Agent Kamal', 'BSc Pharmacology', 'Colombo', 'Active'),
+('SLMC-5003', 'Dr. R. Perera', 'MBBS', 'Kandy', 'Active');
+
+
+-- =====================================================
 -- SEED DATA - Users
 -- =====================================================
 
@@ -191,27 +228,27 @@ INSERT INTO users (legacy_id, name, email, password, role, status, phone, addres
 -- =====================================================
 INSERT INTO products (legacy_id, name, brand, supplier_id, description) VALUES
 ('m1', 'Panadol (Paracetamol 500mg)', 'GSK', (SELECT id FROM users WHERE legacy_id='u_s7'), 'Effective for fast pain relief and reducing fever.'),
-('m2', 'Piriton (Chlorphenamine 4mg)', 'GSK', (SELECT id FROM users WHERE legacy_id='u_s7'), 'Used for treating allergies),
+('m2', 'Piriton (Chlorphenamine 4mg)', 'GSK', (SELECT id FROM users WHERE legacy_id='u_s7'), 'Used for treating allergies.'),
 ('m3', 'Samahan', 'Link Natural', (SELECT id FROM users WHERE legacy_id='u_s14'), 'Traditional herbal remedy for cold and cold-related symptoms.'),
-('m4', 'Siddhalepa Balm (50g)', 'Hettigoda', (SELECT id FROM users WHERE legacy_id='u_s15'), 'Ayurvedic balm for headaches),
+('m4', 'Siddhalepa Balm (50g)', 'Hettigoda', (SELECT id FROM users WHERE legacy_id='u_s15'), 'Ayurvedic balm for headaches.'),
 ('m5', 'Metformin 500mg', 'SPC', (SELECT id FROM users WHERE legacy_id='u_s10'), 'Used to treat type 2 diabetes by controlling high blood sugar.'),
 ('m6', 'Losartan 50mg', 'Morison', (SELECT id FROM users WHERE legacy_id='u_s3'), 'Medication used to treat high blood pressure (hypertension).'),
 ('m7', 'Amoxicillin 500mg', 'Astron', (SELECT id FROM users WHERE legacy_id='u_s5'), 'Antibiotic used for treating a wide variety of bacterial infections.'),
 ('m8', 'Vitamin C 100mg', 'Hemas', (SELECT id FROM users WHERE legacy_id='u_s1'), 'Daily dietary supplement for boosting immunity and preventing scurvy.'),
 ('m9', 'Aspirin 75mg', 'Baurs', (SELECT id FROM users WHERE legacy_id='u_s2'), 'Low dose aspirin to prevent blood clots and reduce heart attack risk.'),
 ('m10', 'Atorvastatin 20mg', 'SPC', (SELECT id FROM users WHERE legacy_id='u_s10'), 'Lowers "bad" cholesterol and triglycerides in the blood.'),
-('m11', 'Omeprazole 20mg', 'Astron', (SELECT id FROM users WHERE legacy_id='u_s5'), 'Decreases stomach acid),
+('m11', 'Omeprazole 20mg', 'Astron', (SELECT id FROM users WHERE legacy_id='u_s5'), 'Decreases stomach acid.'),
 ('m12', 'Diclofenac Sodium 50mg', 'Morison', (SELECT id FROM users WHERE legacy_id='u_s3'), 'Nonsteroidal anti-inflammatory drug (NSAID) for pain and arthritis.'),
 ('m13', 'Salbutamol Inhaler', 'GSK', (SELECT id FROM users WHERE legacy_id='u_s7'), 'Relief inhaler for asthma and COPD bronchospasms.'),
 ('m14', 'Cetirizine 10mg', 'Hemas', (SELECT id FROM users WHERE legacy_id='u_s1'), 'Non-drowsy antihistamine for allergy symptoms.'),
-('m15', 'Ibuprofen 400mg', 'Sunshine', (SELECT id FROM users WHERE legacy_id='u_s4'), 'NSAID used for reducing pain),
+('m15', 'Ibuprofen 400mg', 'Sunshine', (SELECT id FROM users WHERE legacy_id='u_s4'), 'NSAID used for reducing pain.'),
 ('m16', 'Azithromycin 500mg', 'Baurs', (SELECT id FROM users WHERE legacy_id='u_s2'), 'Macrolide antibiotic to treat respiratory and skin infections.'),
 ('m17', 'Domperidone 10mg', 'Navesta', (SELECT id FROM users WHERE legacy_id='u_s9'), 'Anti-emetic medicine to relieve nausea and vomiting.'),
-('m18', 'Folic Acid 5mg', 'Astron', (SELECT id FROM users WHERE legacy_id='u_s5'), 'Supplement for treating folic acid deficiency),
+('m18', 'Folic Acid 5mg', 'Astron', (SELECT id FROM users WHERE legacy_id='u_s5'), 'Supplement for treating folic acid deficiency.'),
 ('m19', 'Calcium Sandoz', 'George Steuart', (SELECT id FROM users WHERE legacy_id='u_s8'), 'Effervescent tablets for strong bones and calcium deficiency.'),
 ('m20', 'Ranitidine 150mg', 'Emerchemie', (SELECT id FROM users WHERE legacy_id='u_s11'), 'Antacid medication for treating stomach ulcers and acid indigestion.'),
 ('m21', 'Thyroxine 50mcg', 'Hemas', (SELECT id FROM users WHERE legacy_id='u_s1'), 'Hormone replacement therapy for hypothyroidism.'),
-('m22', 'Amikacin Injection', 'CIC', (SELECT id FROM users WHERE legacy_id='u_s6'), 'Injectable antibiotic for severe),
+('m22', 'Amikacin Injection', 'CIC', (SELECT id FROM users WHERE legacy_id='u_s6'), 'Injectable antibiotic for severe infections.'),
 ('m23', 'Dexamethasone 0.5mg', 'Astron', (SELECT id FROM users WHERE legacy_id='u_s5'), 'Corticosteroid used to relieve severe inflammation and allergic reactions.'),
 ('m24', 'Ciprofloxacin 500mg', 'Morison', (SELECT id FROM users WHERE legacy_id='u_s3'), 'Fluoroquinolone antibiotic for severe urinary tract and skin infections.'),
 ('m25', 'Chlorpheniramine 4mg', 'SPC', (SELECT id FROM users WHERE legacy_id='u_s10'), 'Classic antihistamine for managing sudden allergic episodes.'),
