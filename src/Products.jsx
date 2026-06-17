@@ -201,9 +201,21 @@ const Products = () => {
             </div>
             
             <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar flex-1">
-              <div className="mb-6">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Description</h4>
-                <p className="text-slate-700 leading-relaxed">{selectedMedicine.description || "High-quality pharmaceutical product sourced directly from verified manufacturers."}</p>
+              <div className="mb-6 grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Description</h4>
+                  <p className="text-slate-700 leading-relaxed text-sm">{selectedMedicine.description || "High-quality pharmaceutical product sourced directly from verified manufacturers."}</p>
+                </div>
+                <div>
+                  <div className="mb-3">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Dosage</h4>
+                    <p className="text-slate-700 font-semibold">{selectedMedicine.dosage || "-"}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Batch Number</h4>
+                    <p className="text-slate-700 font-mono text-sm bg-slate-100 px-2 py-1 rounded inline-block">{selectedMedicine.batch_number || "-"}</p>
+                  </div>
+                </div>
               </div>
               
               <div className="flex justify-between items-center bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-100 mb-8">

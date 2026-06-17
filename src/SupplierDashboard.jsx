@@ -26,7 +26,7 @@ const SupplierDashboard = () => {
   const [medicines, setMedicines] = useState([]);
   
   const [commissionRate, setCommissionRate] = useState(1.0);
-  const initialMedState = { brand: '', name: '', description: '', price: '', mrp: '', expireDate: '', stock: '' };
+  const initialMedState = { brand: '', name: '', description: '', price: '', mrp: '', expireDate: '', stock: '', dosage: '', batch_number: '' };
   const [newMed, setNewMed] = useState(initialMedState);
 
   const fetchInventory = async () => {
@@ -71,6 +71,8 @@ const SupplierDashboard = () => {
     const e = {};
     if (!newMed.brand.trim()) e.brand = 'Brand name is required.';
     if (!newMed.name.trim()) e.name = 'Generic name is required.';
+    if (!newMed.batch_number?.trim()) e.batch_number = 'Batch number is required.';
+    if (!newMed.dosage?.trim()) e.dosage = 'Dosage is required.';
     if (!newMed.stock || isNaN(newMed.stock) || parseInt(newMed.stock) <= 0) e.stock = 'Valid stock required.';
     if (!newMed.price || isNaN(newMed.price) || parseFloat(newMed.price) <= 0) e.price = 'Valid base price required.';
     if (!newMed.mrp || isNaN(newMed.mrp) || parseFloat(newMed.mrp) <= 0) e.mrp = 'Valid MRP required.';
@@ -181,7 +183,9 @@ const SupplierDashboard = () => {
               {[
                 { key: 'brand', label: 'Brand Name', placeholder: 'e.g. GSK', type: 'text' },
                 { key: 'name', label: 'Generic Name', placeholder: 'e.g. Paracetamol', type: 'text' },
-                { key: 'description', label: 'Description / Dosage', placeholder: 'e.g. 500mg tablets', type: 'text' },
+                { key: 'dosage', label: 'Dosage', placeholder: 'e.g. 500mg', type: 'text' },
+                { key: 'batch_number', label: 'Batch Number', placeholder: 'e.g. BATCH-1234', type: 'text' },
+                { key: 'description', label: 'Description', placeholder: 'e.g. 500mg tablets, 10 strips per box', type: 'text' },
                 { key: 'stock', label: 'Stock Quantity', placeholder: 'e.g. 1000', type: 'number' },
               ].map(field => (
                 <div key={field.key}>
@@ -258,8 +262,8 @@ const SupplierDashboard = () => {
                         <tr key={med.id} className={`transition-colors ${med.stock < 20 ? 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-red-500' : 'hover:bg-slate-50 border-l-4 border-transparent'}`}>
                           <td className="px-6 py-4"><span className="bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-lg text-xs uppercase tracking-wider">{med.brand}</span></td>
                           <td className="px-6 py-4 font-bold text-slate-900">{med.name}</td>
-                          <td className="px-6 py-4 text-slate-600 text-sm font-semibold">{med.description || 'N/A'}</td>
-                          <td className="px-6 py-4 text-slate-500 text-xs font-mono">N/A</td>
+                          <td className="px-6 py-4 text-slate-600">{med.dosage || '-'}</td>
+                          <td className="px-6 py-4 font-mono text-xs text-slate-500">{med.batch_number || '-'}</td>
                           <td className="px-6 py-4 font-bold text-slate-700">Rs. {(Number(med.price) || 0).toFixed(2)}</td>
                           <td className="px-6 py-4 font-black text-indigo-700">Rs. {(Number(med.mrp) || 0).toFixed(2)}</td>
                           <td className="px-6 py-4 text-slate-500 text-sm">{med.expireDate}</td>

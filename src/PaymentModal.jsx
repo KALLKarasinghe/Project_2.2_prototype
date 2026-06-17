@@ -107,6 +107,8 @@ const PaymentModal = ({ total, onClose }) => {
         address: buyerAddress,
         city: buyerAddress,
         country: 'Sri Lanka',
+        custom_1: 'MARKETPLACE_SPLIT',
+        custom_2: `COMMISSION_${(cartTotal * 0.05).toFixed(2)}_PAYOUT_${(cartTotal * 0.95).toFixed(2)}`,
       };
 
       window.payhere.onCompleted = async function onCompleted(completedOrderId) {
@@ -206,7 +208,7 @@ const PaymentModal = ({ total, onClose }) => {
               <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100 mb-5 relative overflow-hidden">
                 <div className="flex justify-between items-center pt-1">
                   <span className="text-sm font-bold text-blue-800">Total Amount</span>
-                  <span className="text-2xl font-black text-blue-900">Rs. {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  <span className="text-xl font-black text-slate-800">LKR {cartTotal.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -222,6 +224,29 @@ const PaymentModal = ({ total, onClose }) => {
                   <option value="Bank Transfer">Bank Transfer</option>
                 </select>
               </div>
+
+              {/* Split Payment Breakdown UI */}
+              {paymentMethod === 'PayHere' && (
+                <div className="mb-5 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                  <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    PayHere Marketplace Routing
+                  </h4>
+                  <div className="flex justify-between items-center text-sm mb-1 text-slate-600">
+                    <span>Platform Commission (5%)</span>
+                    <span className="font-semibold">LKR {(cartTotal * 0.05).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm mb-2 text-slate-600">
+                    <span>Supplier Payout (95%)</span>
+                    <span className="font-semibold">LKR {(cartTotal * 0.95).toFixed(2)}</span>
+                  </div>
+                  <div className="pt-2 mt-2 border-t border-blue-200/50 flex justify-between items-center">
+                    <span className="text-sm font-bold text-slate-700">Total Authorized</span>
+                    <span className="text-base font-extrabold text-blue-700">LKR {cartTotal.toFixed(2)}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-3 leading-tight italic">* In production, PayHere automatically splits and routes these funds directly to the respective connected bank accounts upon successful transaction.</p>
+                </div>
+              )}
 
               {paymentMethod === 'Bank Transfer' && (
                 <div className="mb-5 bg-slate-50 p-4 rounded-xl border border-slate-200">

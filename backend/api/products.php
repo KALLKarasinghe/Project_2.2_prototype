@@ -17,8 +17,8 @@ if ($method === 'GET') {
         $role = $_GET['role'] ?? '';
         $company_id = $_GET['company_id'] ?? null;
 
-        $sql = "SELECT p.id, p.supplier_id as company_id, p.brand, p.name, 
-                       i.price, i.mrp, i.expire_date as expireDate, i.stock, p.description, 
+        $sql = "SELECT p.id, p.supplier_id as company_id, p.brand, p.name, p.dosage,
+                       i.price, i.mrp, i.expire_date as expireDate, i.stock, i.batch_number, p.description, 
                        u.name AS company_name
                 FROM products p
                 JOIN inventory i ON p.id = i.product_id
@@ -91,10 +91,12 @@ if ($method === 'GET') {
     $stock        = $data['stock'] ?? 0;
     $expire_date  = $data['expireDate'] ?? null;
     $description  = $data['description'] ?? '';
+    $dosage       = $data['dosage'] ?? null;
+    $batch_number = $data['batch_number'] ?? null;
 
-    if (!$supplier_id || !$name || !$brand || !$price || !$mrp) {
+    if (!$supplier_id || !$name || !$brand || !$price || !$mrp || !$stock || !$expire_date) {
         http_response_code(400);
-        echo json_encode(["error" => "Supplier ID, name, brand, base price, and MRP are required."]);
+        echo json_encode(["error" => "Supplier ID, name, brand, base price, MRP, stock, and expire date are required."]);
         exit;
     }
 
@@ -114,28 +116,30 @@ if ($method === 'GET') {
             exit;
         }
 
-        $sql1 = "INSERT INTO products (supplier_id, name, brand, description) 
-                VALUES (:supplier_id, :name, :brand, :description)";
+        $sql1 = "INSERT INTO products (supplier_id, name, brand, description, dosage) 
+                VALUES (:supplier_id, :name, :brand, :description, :dosage)";
         
         $stmt1 = $db->prepare($sql1);
         $stmt1->execute([
             ':supplier_id' => $supplier_id,
             ':name'        => $name,
             ':brand'       => $brand,
-            ':description' => $description
+            ':description' => $description,
+            ':dosage'      => $dosage
         ]);
 
         $newId = $db->lastInsertId();
 
-        $sql2 = "INSERT INTO inventory (product_id, price, mrp, stock, expire_date)
-                 VALUES (:product_id, :price, :mrp, :stock, :expire_date)";
+        $sql2 = "INSERT INTO inventory (product_id, price, mrp, stock, expire_date, batch_number)
+                 VALUES (:product_id, :price, :mrp, :stock, :expire_date, :batch_number)";
         $stmt2 = $db->prepare($sql2);
         $stmt2->execute([
-            ':product_id'  => $newId,
-            ':price'       => $price,
-            ':mrp'         => $mrp,
-            ':stock'       => $stock,
-            ':expire_date' => $expire_date
+            ':product_id'   => $newId,
+            ':price'        => $price,
+            ':mrp'          => $mrp,
+            ':stock'        => $stock,
+            ':expire_date'  => $expire_date,
+            ':batch_number' => $batch_number
         ]);
 
         $db->commit();
