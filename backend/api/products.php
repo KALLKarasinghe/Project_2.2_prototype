@@ -7,7 +7,7 @@
  * POST /api/products.php                           - Add new product (supplier only)
  */
 require_once __DIR__ . '/../config/cors.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/database.php'; 
 
 $db = (new Database())->getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
