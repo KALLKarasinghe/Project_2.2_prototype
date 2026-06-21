@@ -78,8 +78,31 @@ try {
             }
         }
 
-        // Default status: customers are automatically approved, others are pending
-        $status = ($role === 'customer') ? 'approved' : 'pending';
+        // Auto-approve logic based on role
+        if ($role === 'customer') {
+            $status = 'approved';
+        } else if ($role === 'pharmacy') {
+            $nmra_stmt = $db->prepare("SELECT id FROM mock_nmra_database WHERE 
+                LOWER(TRIM(pharmacy_name)) = LOWER(TRIM(:name)) AND 
+                LOWER(TRIM(pharmacy_address)) = LOWER(TRIM(:address)) AND 
+                TRIM(slmc_number) = TRIM(:license_no)");
+            
+            $nmra_stmt->execute([
+                ':name' => $data['name'] ?? '',
+                ':address' => $data['address'] ?? '',
+                ':license_no' => $data['license_no'] ?? ''
+            ]);
+
+            if ($nmra_stmt->fetch()) {
+                $status = 'Active'; // Active means approved in the users table
+            } else {
+                http_response_code(400);
+                echo json_encode(["error" => "Registration Failed: Pharmacy details do not match the NMRA registry."]);
+                exit;
+            }
+        } else {
+            $status = 'pending';
+        }
 
         // Hash the password securely using Argon2id
         $hashed_password = password_hash($password, PASSWORD_ARGON2ID);

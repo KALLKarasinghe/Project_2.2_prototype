@@ -110,9 +110,9 @@ const Navbar = () => {
                       <p className="text-xs text-slate-500 truncate capitalize">{currentUser.role} Account</p>
                     </div>
                     <div className="p-2 space-y-1">
-                      {/* Dashboard Link (if not pharmacy/customer) */}
-                      {(currentUser.role === 'admin' || currentUser.role === 'supplier' || currentUser.role === 'company') && (
-                        <Link to={currentUser.role === 'admin' ? '/admin' : '/supplier'} onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 hover:text-blue-600 transition-colors">
+                      {/* Dashboard Link */}
+                      {['admin', 'supplier', 'company', 'pharmacy'].includes(currentUser.role?.toLowerCase()) && (
+                        <Link to={currentUser.role?.toLowerCase() === 'admin' ? '/admin' : currentUser.role?.toLowerCase() === 'pharmacy' ? '/pharmacy' : '/supplier'} onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 hover:text-blue-600 transition-colors">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                           My Dashboard
                         </Link>
@@ -123,10 +123,6 @@ const Navbar = () => {
                         My Orders
                       </Link>
 
-                      <Link to="/membership" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 hover:text-blue-600 transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                        Membership Plan
-                      </Link>
                     </div>
                     <div className="p-2 border-t border-slate-50">
                       <button onClick={() => { handleSignOut(); setUserMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-red-600 rounded-xl hover:bg-red-50 transition-colors">

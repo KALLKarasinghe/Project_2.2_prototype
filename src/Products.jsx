@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSystemStore } from './SystemContext';
 import { Link } from 'react-router-dom';
 import CartSidebar from './CartSidebar';
@@ -10,6 +10,13 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedMedicine, setSelectedMedicine] = useState(null);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedBrands]);
 
   const uniqueBrands = [...new Set(medicines.map(item => item.brand).filter(Boolean))].sort();
 
@@ -54,6 +61,12 @@ const Products = () => {
   const finalDisplayedMedicines = selectedBrands.length === 0
     ? searchedMedicines
     : searchedMedicines.filter(med => selectedBrands.includes(med.brand));
+
+  const totalPages = Math.ceil(finalDisplayedMedicines.length / itemsPerPage);
+  const currentMedicines = finalDisplayedMedicines.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -126,8 +139,8 @@ const Products = () => {
           {/* --- Right Products Grid --- */}
           <div className="w-full md:w-3/4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {finalDisplayedMedicines.length > 0 ? (
-                finalDisplayedMedicines.map((med) => (
+              {currentMedicines.length > 0 ? (
+                currentMedicines.map((med) => (
                   <div
                     key={med.id}
                     onClick={() => setSelectedMedicine(med)}
@@ -176,6 +189,41 @@ const Products = () => {
                 </div>
               )}
             </div>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center mt-10 gap-2 mb-4">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <div className="flex gap-1 flex-wrap justify-center">
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`w-10 h-10 rounded-lg font-bold text-sm transition-all flex items-center justify-center ${
+                        currentPage === i + 1
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
 
         </div>

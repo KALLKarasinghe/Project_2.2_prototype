@@ -25,6 +25,9 @@ const SupplierDashboard = () => {
   const initialMedState = { brand: '', name: '', description: '', price: '', mrp: '', expireDate: '', stock: '' };
   const [newMed, setNewMed] = useState(initialMedState);
 
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const INVENTORY_PER_PAGE = 15;
+
   const fetchInventory = async () => {
     if (!currentUser?.id) return;
     try {
@@ -117,6 +120,9 @@ const SupplierDashboard = () => {
     { id: 'incoming_orders', label: 'Incoming Orders', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
     { id: 'analytics', label: 'Pro Analytics', icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z' },
   ];
+
+  const totalInventoryPages = Math.ceil(medicines.length / INVENTORY_PER_PAGE) || 1;
+  const paginatedMedicines = medicines.slice((inventoryPage - 1) * INVENTORY_PER_PAGE, inventoryPage * INVENTORY_PER_PAGE);
 
   const Sidebar = () => (
     <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:static inset-y-0 left-0 z-30 w-64 bg-indigo-950 text-white flex flex-col shadow-xl transition-transform duration-300`}>
@@ -237,45 +243,70 @@ const SupplierDashboard = () => {
               {medicines.length === 0 ? (
                 <EmptyState icon={<svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>} title="Inventory is empty" description='Add new medicines to see them here.' />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead><tr className="bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-                      <th className="px-6 py-4">Brand</th>
-                      <th className="px-6 py-4">Generic Name</th>
-                      <th className="px-6 py-4">Dosage</th>
-                      <th className="px-6 py-4">Batch No</th>
-                      <th className="px-6 py-4">Base Price</th>
-                      <th className="px-6 py-4">MRP</th>
-                      <th className="px-6 py-4">Expiry</th>
-                      <th className="px-6 py-4 text-right">Stock</th>
-                    </tr></thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {medicines.map(med => (
-                        <tr key={med.id} className={`transition-colors ${med.stock < 20 ? 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-red-500' : 'hover:bg-slate-50 border-l-4 border-transparent'}`}>
-                          <td className="px-6 py-4"><span className="bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-lg text-xs uppercase tracking-wider">{med.brand}</span></td>
-                          <td className="px-6 py-4 font-bold text-slate-900">{med.name}</td>
-                          <td className="px-6 py-4 text-slate-600 text-sm font-semibold">{med.description || 'N/A'}</td>
-                          <td className="px-6 py-4 text-slate-500 text-xs font-mono">N/A</td>
-                          <td className="px-6 py-4 font-bold text-slate-700">Rs. {(Number(med.price) || 0).toFixed(2)}</td>
-                          <td className="px-6 py-4 font-black text-indigo-700">Rs. {(Number(med.mrp) || 0).toFixed(2)}</td>
-                          <td className="px-6 py-4 text-slate-500 text-sm">{med.expireDate}</td>
-                          <td className="px-6 py-4 text-right">
-                            <span className={`text-lg font-black ${med.stock < 20 ? 'text-red-600' : 'text-emerald-600'}`}>
-                              {med.stock}
-                            </span>
-                            {med.stock < 20 && (
-                              <div className="mt-1">
-                                <span className="bg-red-100 text-red-700 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border border-red-200">
-                                  Low Stock Alert
-                                </span>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead><tr className="bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                        <th className="px-6 py-4">Brand</th>
+                        <th className="px-6 py-4">Generic Name</th>
+                        <th className="px-6 py-4">Dosage</th>
+                        <th className="px-6 py-4">Batch No</th>
+                        <th className="px-6 py-4">Base Price</th>
+                        <th className="px-6 py-4">MRP</th>
+                        <th className="px-6 py-4">Expiry</th>
+                        <th className="px-6 py-4 text-right">Stock</th>
+                      </tr></thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {paginatedMedicines.map(med => (
+                          <tr key={med.id} className={`transition-colors ${med.stock < 20 ? 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-red-500' : 'hover:bg-slate-50 border-l-4 border-transparent'}`}>
+                            <td className="px-6 py-4"><span className="bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-lg text-xs uppercase tracking-wider">{med.brand}</span></td>
+                            <td className="px-6 py-4 font-bold text-slate-900">{med.name}</td>
+                            <td className="px-6 py-4 text-slate-600 text-sm font-semibold">{med.description || 'N/A'}</td>
+                            <td className="px-6 py-4 text-slate-500 text-xs font-mono">N/A</td>
+                            <td className="px-6 py-4 font-bold text-slate-700">Rs. {(Number(med.price) || 0).toFixed(2)}</td>
+                            <td className="px-6 py-4 font-black text-indigo-700">Rs. {(Number(med.mrp) || 0).toFixed(2)}</td>
+                            <td className="px-6 py-4 text-slate-500 text-sm">{med.expireDate}</td>
+                            <td className="px-6 py-4 text-right">
+                              <span className={`text-lg font-black ${med.stock < 20 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                {med.stock}
+                              </span>
+                              {med.stock < 20 && (
+                                <div className="mt-1">
+                                  <span className="bg-red-100 text-red-700 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border border-red-200">
+                                    Low Stock Alert
+                                  </span>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {totalInventoryPages > 1 && (
+                    <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
+                      <p className="text-sm text-slate-700">
+                        Showing <span className="font-bold">{(inventoryPage - 1) * INVENTORY_PER_PAGE + 1}</span> to <span className="font-bold">{Math.min(inventoryPage * INVENTORY_PER_PAGE, medicines.length)}</span> of <span className="font-bold">{medicines.length}</span> results
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setInventoryPage(p => Math.max(1, p - 1))}
+                          disabled={inventoryPage === 1}
+                          className="px-3 py-1 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => setInventoryPage(p => Math.min(totalInventoryPages, p + 1))}
+                          disabled={inventoryPage === totalInventoryPages}
+                          className="px-3 py-1 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </section>
           )}

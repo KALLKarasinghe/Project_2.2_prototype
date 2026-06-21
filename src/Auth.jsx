@@ -91,7 +91,7 @@ const Auth = () => {
         // Route based on role
         const role = data.user.role?.toLowerCase();
         if (role === 'admin') navigate('/admin');
-        else if (role === 'company' || role === 'supplier') navigate('/supplier');
+        else if (role === 'supplier') navigate('/supplier');
         else if (role === 'agent') navigate('/agent');
         else if (role === 'customer') navigate('/customer');
         else navigate('/'); // Pharmacy or fallback
@@ -113,13 +113,13 @@ const Auth = () => {
     
     if (regRole) {
         if (!regName.trim()) errs.regName = 'Name is required.';
-        if (['pharmacy', 'company', 'agent'].includes(regRole)) {
+        if (['pharmacy', 'supplier', 'agent'].includes(regRole)) {
             if (!regLicenseFile) errs.regLicenseFile = 'A verification document is required.';
         }
         if (regRole === 'pharmacy') {
             if (!regLicenseNo.trim()) errs.regLicenseNo = 'License Number is required.';
             if (!regAddress.trim()) errs.regAddress = 'Address is required.';
-        } else if (regRole === 'company') {
+        } else if (regRole === 'supplier') {
             if (!regRegistrationNo.trim()) errs.regRegistrationNo = 'BR Number is required.';
             if (!regAddress.trim()) errs.regAddress = 'Address is required.';
         } else if (regRole === 'agent') {
@@ -154,7 +154,7 @@ const Auth = () => {
             setRegAddress(''); setRegLicenseNo(''); setRegRegistrationNo(''); setRegTerritory('');
             setRegLicenseFile(null);
             
-            if (res.status === 'approved' || regRole === 'customer') {
+            if (res.status === 'approved' || res.status === 'Active' || regRole === 'customer') {
                 toast.success('Registration successful! You can now sign in.');
             } else {
                 toast.success('Registration submitted! Please wait for Admin approval.');
@@ -298,7 +298,7 @@ const Auth = () => {
                   >
                     <option value="" disabled>Select a role</option>
                     <option value="pharmacy">Pharmacy</option>
-                    <option value="company">Company</option>
+                    <option value="supplier">Supplier</option>
                     <option value="agent">Medical Agent</option>
                     <option value="customer">Customer</option>
                   </select>
@@ -312,7 +312,7 @@ const Auth = () => {
               {regRole && (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                        {regRole === 'company' ? 'Company Name' : regRole === 'pharmacy' ? 'Pharmacy Name' : 'Full Name'}
+                        {regRole === 'supplier' ? 'Supplier Name' : regRole === 'pharmacy' ? 'Pharmacy Name' : 'Full Name'}
                     </label>
                     <input 
                     type="text" 
@@ -377,7 +377,7 @@ const Auth = () => {
                   </div>
               )}
 
-              {regRole === 'company' && (
+              {regRole === 'supplier' && (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Business Registration (BR) Number</label>
@@ -391,12 +391,12 @@ const Auth = () => {
                         {regErrors.regRegistrationNo && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regRegistrationNo}</p>}
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Company Address</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Supplier Address</label>
                         <textarea 
                             value={regAddress}
                             onChange={(e) => { setRegAddress(e.target.value); setRegErrors(p => ({ ...p, regAddress: '' })); }}
                             className={`w-full bg-slate-50 border text-slate-900 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${regErrors.regAddress ? 'border-red-400' : 'border-slate-200'}`}
-                            placeholder="Enter company address"
+                            placeholder="Enter supplier address"
                             rows="2"
                         ></textarea>
                         {regErrors.regAddress && <p className="text-red-500 text-xs mt-1 font-medium">{regErrors.regAddress}</p>}
@@ -432,7 +432,7 @@ const Auth = () => {
                   </div>
               )}
 
-              {['pharmacy', 'company', 'agent'].includes(regRole) && (
+              {['pharmacy', 'supplier', 'agent'].includes(regRole) && (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                       <label className="block text-sm font-semibold text-slate-700 mb-1.5">Verification Document (Image/PDF)</label>
                       <input 

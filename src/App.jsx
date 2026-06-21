@@ -7,6 +7,7 @@ import Auth from './Auth';
 import AdminLogin from './AdminLogin';
 
 import SupplierDashboard from './SupplierDashboard';
+import PharmacyDashboard from './PharmacyDashboard';
 
 import AgentDashboard from './AgentDashboard';
 import CustomerDashboard from './CustomerDashboard';
@@ -36,6 +37,7 @@ function App() {
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/supplier" element={<ProtectedRoute><SupplierDashboard /></ProtectedRoute>} />
+            <Route path="/pharmacy" element={<ProtectedRoute><PharmacyDashboard /></ProtectedRoute>} />
             <Route path="/agent" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />
             <Route path="/customer" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
           </Routes>

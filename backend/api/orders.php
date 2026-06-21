@@ -25,7 +25,7 @@ switch ($method) {
         try {
             if ($role === 'pharmacy') {
                 // Pharmacy sees their own orders, joined with product and supplier info
-                $sql = "SELECT o.id, o.product_id as medicine_id, o.pharmacy_id, o.quantity, o.status, o.created_at, o.transaction_id,
+                $sql = "SELECT o.id, o.product_id as medicine_id, o.pharmacy_id, o.quantity, o.status, o.created_at,
                                pr.name as medicine_name, pr.brand, i.price,
                                pr.supplier_id as company_id,
                                u.name as company_name,
@@ -39,7 +39,7 @@ switch ($method) {
                         ORDER BY o.id DESC";
             } else if ($role === 'supplier') {
                 // Supplier sees orders for their products
-                $sql = "SELECT o.id, o.product_id as medicine_id, o.pharmacy_id, o.quantity, o.status, o.created_at, o.transaction_id,
+                $sql = "SELECT o.id, o.product_id as medicine_id, o.pharmacy_id, o.quantity, o.status, o.created_at,
                                pr.name as medicine_name, pr.brand, i.price,
                                ph.name as pharmacy_name,
                                pm.status as payment_status, pm.payment_method

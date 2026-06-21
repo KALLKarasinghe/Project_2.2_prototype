@@ -35,13 +35,21 @@ const AdminDashboard = () => {
     current_rate: 1.0
   });
   const [newRate, setNewRate] = useState('');
+  const [systemLogs, setSystemLogs] = useState([]);
+
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userPage, setUserPage] = useState(1);
+  const USERS_PER_PAGE = 15;
+
+  const [logsPage, setLogsPage] = useState(1);
+  const LOGS_PER_PAGE = 20;
 
   const fetchPendingVerifications = async () => {
     try {
       const res = await fetch('http://localhost/pharma_backend/api/admin_verify.php');
       const data = await res.json();
       if (data.success) {
-        setAdminVerifyUsers(data.data);
+        setAdminVerifyUsers(data.data.filter(u => u.role?.toLowerCase() !== 'pharmacy'));
       }
     } catch (err) {
       console.error('Failed to fetch pending verifications', err);
@@ -85,6 +93,18 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchSystemLogs = async () => {
+    try {
+      const res = await fetch('http://localhost/pharma_backend/api/admin_logs.php');
+      const data = await res.json();
+      if (data.success) {
+        setSystemLogs(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch system logs', err);
+    }
+  };
+
   const handleGenerateAiInsights = async () => {
     setIsAiLoading(true);
     try {
@@ -109,6 +129,7 @@ const AdminDashboard = () => {
     fetchStats();
     fetchSalesData();
     fetchCommissions();
+    fetchSystemLogs();
   }, []);
 
   const handleVerifyAction = async (userId, action, userName) => {
@@ -200,6 +221,19 @@ const AdminDashboard = () => {
       </div>
     </aside>
   );
+
+  // Filter and paginate users
+  const filteredUsers = users.filter(user => 
+    user.name?.toLowerCase().includes(userSearchQuery.toLowerCase()) || 
+    user.role?.toLowerCase().includes(userSearchQuery.toLowerCase())
+  );
+  
+  const totalUserPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE) || 1;
+  const paginatedUsers = filteredUsers.slice((userPage - 1) * USERS_PER_PAGE, userPage * USERS_PER_PAGE);
+
+  // Paginate logs
+  const totalLogPages = Math.ceil(systemLogs.length / LOGS_PER_PAGE) || 1;
+  const paginatedLogs = [...systemLogs].reverse().slice((logsPage - 1) * LOGS_PER_PAGE, logsPage * LOGS_PER_PAGE);
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
@@ -366,39 +400,86 @@ const AdminDashboard = () => {
           )}
 
           {activeTab === 'users' && (
-            <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              {users.length === 0 ? (
-                <EmptyState
-                  icon={<svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" /></svg>}
-                  title="No active users"
-                  description="Approved users will appear here."
-                />
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead><tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
-                      <th className="px-6 py-4">Name</th><th className="px-6 py-4">Role</th><th className="px-6 py-4">Status</th><th className="px-6 py-4 text-right">Actions</th>
-                    </tr></thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {users.map(user => (
-                        <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-6 py-4 font-bold text-slate-900">{user.name}</td>
-                          <td className="px-6 py-4"><span className="bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-lg text-xs border border-blue-100">{user.role}</span></td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${user.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-                              {user.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button onClick={() => handleDeleteUser(user.id, user.name)} className="text-red-400 hover:text-red-600 font-semibold text-sm transition-colors hover:underline ml-3">Delete</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            <div className="space-y-6">
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search users by name or role..."
+                    value={userSearchQuery}
+                    onChange={(e) => { setUserSearchQuery(e.target.value); setUserPage(1); }}
+                    className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-xl leading-5 bg-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors"
+                  />
                 </div>
-              )}
-            </section>
+              </div>
+
+              <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                {filteredUsers.length === 0 ? (
+                  <EmptyState
+                    icon={<svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" /></svg>}
+                    title="No users found"
+                    description={userSearchQuery ? "Try adjusting your search query." : "Approved users will appear here."}
+                  />
+                ) : (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead><tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                          <th className="px-6 py-4">Name</th><th className="px-6 py-4">Role</th><th className="px-6 py-4">Status</th><th className="px-6 py-4 text-right">Actions</th>
+                        </tr></thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {paginatedUsers.map(user => (
+                            <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="px-6 py-4 font-bold text-slate-900">{user.name}</td>
+                              <td className="px-6 py-4"><span className="bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-lg text-xs border border-blue-100">{user.role}</span></td>
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${user.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                                  {user.status}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                {user.license_document && (
+                                  <a href={`http://localhost/pharma_backend/uploads/${user.license_document}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors hover:underline">View License</a>
+                                )}
+                                <button onClick={() => handleDeleteUser(user.id, user.name)} className="text-red-400 hover:text-red-600 font-semibold text-sm transition-colors hover:underline ml-3">Delete</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {totalUserPages > 1 && (
+                      <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
+                        <p className="text-sm text-slate-700">
+                          Showing <span className="font-bold">{(userPage - 1) * USERS_PER_PAGE + 1}</span> to <span className="font-bold">{Math.min(userPage * USERS_PER_PAGE, filteredUsers.length)}</span> of <span className="font-bold">{filteredUsers.length}</span> results
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setUserPage(p => Math.max(1, p - 1))}
+                            disabled={userPage === 1}
+                            className="px-3 py-1 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Previous
+                          </button>
+                          <button
+                            onClick={() => setUserPage(p => Math.min(totalUserPages, p + 1))}
+                            disabled={userPage === totalUserPages}
+                            className="px-3 py-1 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </section>
+            </div>
           )}
 
           {activeTab === 'commissions' && (
@@ -479,28 +560,53 @@ const AdminDashboard = () => {
 
           {activeTab === 'logs' && (
             <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              {orders.length === 0 ? (
+              {systemLogs.length === 0 ? (
                 <EmptyState
                   icon={<svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                   title="No logs generated yet"
                   description="System actions will appear here automatically as orders are placed."
                 />
               ) : (
-                <div className="p-6 space-y-4">
-                  {[...orders].reverse().map(order => (
-                    <div key={order.id} className="flex items-start gap-4 p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
-                      <div className={`p-2.5 rounded-xl shrink-0 ${order.status === 'Approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
-                        {order.status === 'Approved'
-                          ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                          : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                <>
+                  <div className="p-6 space-y-4">
+                    {paginatedLogs.map(order => (
+                      <div key={order.id} className="flex items-start gap-4 p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
+                        <div className={`p-2.5 rounded-xl shrink-0 ${order.status === 'Approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                          {order.status === 'Approved'
+                            ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                        </div>
+                        <div>
+                          <p className="text-slate-800 font-medium">Order <span className="font-bold">#{order.id.slice(-6)}</span> — <span className="font-bold text-blue-600">{order.quantity} units</span> of <span className="font-bold">{order.medicineName}</span></p>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded mt-1 inline-block border ${order.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>{order.status.toUpperCase()}</span>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-slate-800 font-medium">Order <span className="font-bold">#{order.id.slice(-6)}</span> — <span className="font-bold text-blue-600">{order.quantity} units</span> of <span className="font-bold">{order.medicineName}</span></p>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded mt-1 inline-block border ${order.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>{order.status.toUpperCase()}</span>
+                    ))}
+                  </div>
+                  {totalLogPages > 1 && (
+                    <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
+                      <p className="text-sm text-slate-700">
+                        Showing <span className="font-bold">{(logsPage - 1) * LOGS_PER_PAGE + 1}</span> to <span className="font-bold">{Math.min(logsPage * LOGS_PER_PAGE, systemLogs.length)}</span> of <span className="font-bold">{systemLogs.length}</span> results
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setLogsPage(p => Math.max(1, p - 1))}
+                          disabled={logsPage === 1}
+                          className="px-3 py-1 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => setLogsPage(p => Math.min(totalLogPages, p + 1))}
+                          disabled={logsPage === totalLogPages}
+                          className="px-3 py-1 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </section>
           )}
