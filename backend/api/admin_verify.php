@@ -19,13 +19,14 @@ if ($method === 'GET') {
                 email, 
                 role, 
                 status,
+                admin_approved,
                 name,
                 phone,
                 address,
                 license_document as license_file_path,
                 created_at
             FROM users 
-            WHERE LOWER(status) = 'pending' 
+            WHERE (LOWER(status) = 'pending' OR admin_approved = 0)
             AND LOWER(role) IN ('pharmacy', 'supplier', 'agent', 'medical agent')
             ORDER BY id ASC
         ";
@@ -55,11 +56,13 @@ if ($method === 'GET') {
     
     // Map to database ENUM: 'Active', 'Pending', 'Inactive'
     $newStatus = ($action === 'approve') ? 'Active' : 'Inactive';
+    $adminApproved = ($action === 'approve') ? 1 : 0;
     
     try {
-        $stmt = $db->prepare("UPDATE users SET status = :status WHERE id = :id");
+        $stmt = $db->prepare("UPDATE users SET status = :status, admin_approved = :admin_approved WHERE id = :id");
         $stmt->execute([
             ':status' => $newStatus,
+            ':admin_approved' => $adminApproved,
             ':id' => $user_id
         ]);
         

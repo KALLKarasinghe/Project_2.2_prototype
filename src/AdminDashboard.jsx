@@ -372,7 +372,15 @@ const AdminDashboard = () => {
                       <tbody className="divide-y divide-slate-100">
                         {adminVerifyUsers.map(user => (
                           <tr key={user.user_id} className="hover:bg-slate-50 transition-colors">
-                            <td className="px-6 py-4"><p className="font-bold text-slate-900">{user.name}</p><p className="text-xs text-slate-500">{user.email}</p></td>
+                            <td className="px-6 py-4">
+                              <p className="font-bold text-slate-900">{user.name}</p>
+                              <p className="text-xs text-slate-500">{user.email}</p>
+                              {user.status === 'Active' && user.admin_approved == 0 && (
+                                <span className="inline-block mt-1 bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded text-[10px] border border-amber-200">
+                                  Awaiting Medicine Approval
+                                </span>
+                              )}
+                            </td>
                             <td className="px-6 py-4"><span className="bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-lg text-xs border border-blue-100">{user.role}</span></td>
                             <td className="px-6 py-4 text-sm text-slate-500">
                               {user.license_file_path ? (

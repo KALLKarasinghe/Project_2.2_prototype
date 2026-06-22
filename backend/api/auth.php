@@ -77,10 +77,11 @@ try {
                 exit;
             }
         }
-
+        $admin_approved = 0;
         // Auto-approve logic based on role
         if ($role === 'customer') {
             $status = 'approved';
+            $admin_approved = 1;
         } else if ($role === 'pharmacy') {
             $nmra_stmt = $db->prepare("SELECT id FROM mock_nmra_database WHERE 
                 LOWER(TRIM(pharmacy_name)) = LOWER(TRIM(:name)) AND 
@@ -95,13 +96,47 @@ try {
 
             if ($nmra_stmt->fetch()) {
                 $status = 'Active'; // Active means approved in the users table
+                $admin_approved = 1;
             } else {
                 http_response_code(400);
                 echo json_encode(["error" => "Registration Failed: Pharmacy details do not match the NMRA registry."]);
                 exit;
             }
+        } else if ($role === 'supplier') {
+            $comp_stmt = $db->prepare("SELECT id FROM mock_company_registry WHERE 
+                LOWER(TRIM(company_name)) = LOWER(TRIM(:name)) AND 
+                TRIM(br_number) = TRIM(:reg_no)");
+            $comp_stmt->execute([
+                ':name' => $data['name'] ?? '',
+                ':reg_no' => $data['registration_no'] ?? ''
+            ]);
+            if ($comp_stmt->fetch()) {
+                $status = 'Active'; // Active but half access
+                $admin_approved = 0;
+            } else {
+                http_response_code(400);
+                echo json_encode(["error" => "Registration Failed: Supplier details do not match the Company registry."]);
+                exit;
+            }
+        } else if ($role === 'agent' || $role === 'medical agent') {
+            $slmc_stmt = $db->prepare("SELECT id FROM mock_slmc_database WHERE 
+                LOWER(TRIM(agent_name)) = LOWER(TRIM(:name)) AND 
+                TRIM(slmc_number) = TRIM(:reg_no)");
+            $slmc_stmt->execute([
+                ':name' => $data['name'] ?? '',
+                ':reg_no' => $data['registration_no'] ?? ''
+            ]);
+            if ($slmc_stmt->fetch()) {
+                $status = 'Active'; // Active but half access
+                $admin_approved = 0;
+            } else {
+                http_response_code(400);
+                echo json_encode(["error" => "Registration Failed: Agent details do not match the SLMC registry."]);
+                exit;
+            }
         } else {
             $status = 'pending';
+            $admin_approved = 0;
         }
 
         // Hash the password securely using Argon2id
@@ -111,7 +146,7 @@ try {
         $db->beginTransaction();
 
         // 1. Insert into main users table
-        $stmt = $db->prepare("INSERT INTO users (name, email, password, role, status, phone, address, license_document) VALUES (:name, :email, :password, :role, :status, :phone, :address, :license_document)");
+        $stmt = $db->prepare("INSERT INTO users (name, email, password, role, status, phone, address, license_document, admin_approved) VALUES (:name, :email, :password, :role, :status, :phone, :address, :license_document, :admin_approved)");
         $stmt->execute([
             ':name' => $data['name'] ?? '',
             ':email' => $email,
@@ -120,7 +155,8 @@ try {
             ':status' => $status,
             ':phone' => $data['phone'] ?? null,
             ':address' => $data['address'] ?? null,
-            ':license_document' => $uploaded_file_path
+            ':license_document' => $uploaded_file_path,
+            ':admin_approved' => $admin_approved
         ]);
         
         $db->commit();
@@ -138,7 +174,7 @@ try {
         }
 
         // Verify the email or name against the users table
-        $stmt = $db->prepare("SELECT id, name, email, password, role, status FROM users WHERE email = :email OR name = :name LIMIT 1");
+        $stmt = $db->prepare("SELECT id, name, email, password, role, status, admin_approved FROM users WHERE email = :email OR name = :name LIMIT 1");
         $stmt->execute([':email' => $email, ':name' => $email]);
         $user = $stmt->fetch();
 

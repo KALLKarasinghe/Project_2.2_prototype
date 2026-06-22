@@ -98,6 +98,16 @@ if ($method === 'GET') {
     }
 
     try {
+        // Check if the user is admin_approved
+        $checkStmt = $db->prepare("SELECT admin_approved FROM users WHERE id = :id");
+        $checkStmt->execute([':id' => $supplier_id]);
+        $userCheck = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$userCheck || $userCheck['admin_approved'] == 0) {
+            http_response_code(403);
+            echo json_encode(["error" => "Your account must be approved by an Admin before you can add medicines."]);
+            exit;
+        }
         // fetch current commission rate to validate
         $setStmt = $db->query("SELECT setting_value FROM settings WHERE setting_key = 'commission_rate'");
         $setResult = $setStmt->fetch(PDO::FETCH_ASSOC);
