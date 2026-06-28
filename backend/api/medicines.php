@@ -17,11 +17,12 @@ if ($method === 'GET') {
         $role = $_GET['role'] ?? '';
         $company_id = $_GET['company_id'] ?? null;
 
-        $sql = "SELECT m.id, m.supplier_id as company_id, m.brand, m.name, 
-                       m.price, m.mrp, m.expire_date as expireDate, m.stock, m.description, 
+        $sql = "SELECT p.id, p.supplier_id as company_id, p.brand, p.name, 
+                       i.price, i.mrp, i.expire_date as expireDate, i.stock, p.description, 
                        u.name AS company_name
-                FROM medicines m
-                LEFT JOIN users u ON m.supplier_id = u.id
+                FROM products p
+                JOIN inventory i ON p.id = i.product_id
+                LEFT JOIN users u ON p.supplier_id = u.id
                 WHERE 1=1";
         
         $params = [];
@@ -33,14 +34,14 @@ if ($method === 'GET') {
                 echo json_encode(["error" => "company_id is required for supplier role."]);
                 exit;
             }
-            $sql .= " AND m.supplier_id = :cid";
+            $sql .= " AND p.supplier_id = :cid";
             $params[':cid'] = $company_id;
         } elseif (strtolower($role) === 'pharmacy' || strtolower($role) === 'customer') {
             // Pharmacies and customers see all medicines that have stock
-            $sql .= " AND m.stock > 0";
+            $sql .= " AND i.stock > 0";
         }
 
-        $sql .= " ORDER BY m.id DESC";
+        $sql .= " ORDER BY p.id DESC";
 
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
@@ -121,25 +122,40 @@ if ($method === 'GET') {
             exit;
         }
 
-        $sql = "INSERT INTO medicines (supplier_id, name, brand, price, mrp, stock, expire_date, description) 
-                VALUES (:supplier_id, :name, :brand, :price, :mrp, :stock, :expire_date, :description)";
-        
-        $stmt = $db->prepare($sql);
-        $stmt->execute([
+        $db->beginTransaction();
+
+        // 1. Insert into products
+        $sqlProduct = "INSERT INTO products (supplier_id, name, brand, description) 
+                       VALUES (:supplier_id, :name, :brand, :description)";
+        $stmtProduct = $db->prepare($sqlProduct);
+        $stmtProduct->execute([
             ':supplier_id' => $supplier_id,
             ':name'        => $name,
             ':brand'       => $brand,
+            ':description' => $description
+        ]);
+        
+        $productId = $db->lastInsertId();
+
+        // 2. Insert into inventory
+        $sqlInventory = "INSERT INTO inventory (product_id, price, mrp, stock, expire_date) 
+                         VALUES (:product_id, :price, :mrp, :stock, :expire_date)";
+        $stmtInventory = $db->prepare($sqlInventory);
+        $stmtInventory->execute([
+            ':product_id'  => $productId,
             ':price'       => $price,
             ':mrp'         => $mrp,
             ':stock'       => $stock,
-            ':expire_date' => $expire_date,
-            ':description' => $description
+            ':expire_date' => $expire_date
         ]);
 
-        $newId = $db->lastInsertId();
-        echo json_encode(["success" => true, "id" => $newId, "message" => "Medicine added successfully."]);
+        $db->commit();
+        echo json_encode(["success" => true, "id" => $productId, "message" => "Medicine added successfully."]);
 
     } catch (PDOException $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
         http_response_code(500);
         echo json_encode(["error" => "Database error: " . $e->getMessage()]);
     }

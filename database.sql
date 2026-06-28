@@ -322,3 +322,81 @@ INSERT INTO special_medicines (legacy_id, name, used_for, agent_name, agent_phon
 ('sm3', 'Trastuzumab 440mg',      'HER2-Positive Breast Cancer',                    'Medical Agent Kamal', '071 223 3445'),
 ('sm4', 'Cyclophosphamide 500mg', 'Multiple Myeloma & Autoimmune Disorders',         'Dr. R. Perera',       '077 889 9001'),
 ('sm5', 'Imatinib 400mg',         'Chronic Myeloid Leukemia (CML)',                  'Dr. S. Wijesinghe',   '071 445 5667');
+
+-- =====================================================
+-- 8. USER CART TABLE
+-- =====================================================
+CREATE TABLE user_cart (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    medicine_id INT NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (medicine_id) REFERENCES products(id) ON DELETE CASCADE,
+    INDEX idx_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =====================================================
+-- 9. MOCK DATABASES FOR VERIFICATION
+-- =====================================================
+CREATE TABLE mock_company_registry (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    registration_number VARCHAR(100) NOT NULL UNIQUE,
+    company_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE mock_nmra_database (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    license_number VARCHAR(100) NOT NULL UNIQUE,
+    pharmacy_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE mock_slmc_database (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    slmc_number VARCHAR(100) NOT NULL UNIQUE,
+    agent_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Seed data for Mock Databases
+INSERT INTO mock_company_registry (registration_number, company_name) VALUES
+('REG-001', 'Hemast Pharmaceutical'),
+('REG-002', 'SPC Sri Lanka'),
+('REG-003', 'GlaxoSmithKline');
+
+INSERT INTO mock_nmra_database (license_number, pharmacy_name) VALUES
+('NMRA-001', 'City Pharmacy'),
+('NMRA-002', 'HealthCare Pharmacy'),
+('NMRA-003', 'MediPlus Pharmacy');
+
+INSERT INTO mock_slmc_database (slmc_number, agent_name) VALUES
+('SLMC-001', 'Dr. Perera'),
+('SLMC-002', 'Dr. Silva'),
+('SLMC-003', 'Dr. Fernando');
+
+-- =====================================================
+-- 10. NOTIFICATIONS TABLE
+-- =====================================================
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =====================================================
+-- 11. SETTINGS TABLE
+-- =====================================================
+CREATE TABLE settings (
+    setting_key VARCHAR(50) PRIMARY KEY,
+    setting_value VARCHAR(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES ('commission_rate', '1.0');

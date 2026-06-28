@@ -20,7 +20,7 @@ if ($method === 'GET') {
         $totalOrders = $stmtOrders->fetch(PDO::FETCH_ASSOC)['count'];
 
         // Get total medicines count
-        $stmtMedicines = $db->query("SELECT COUNT(*) as count FROM medicines");
+        $stmtMedicines = $db->query("SELECT COUNT(*) as count FROM products");
         $totalMedicines = $stmtMedicines->fetch(PDO::FETCH_ASSOC)['count'];
 
         echo json_encode([

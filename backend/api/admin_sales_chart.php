@@ -12,9 +12,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 try {
     // Get sales grouped by month for the current year
-    $sql = "SELECT DATE_FORMAT(o.created_at, '%b') as month, SUM(o.quantity * m.price) as total_sales 
+    $sql = "SELECT DATE_FORMAT(o.created_at, '%b') as month, SUM(o.quantity * i.price) as total_sales 
             FROM orders o 
-            JOIN medicines m ON o.medicine_id = m.id 
+            JOIN inventory i ON o.product_id = i.product_id 
             WHERE YEAR(o.created_at) = YEAR(CURRENT_DATE()) 
             AND o.status NOT IN ('Cancelled', 'Rejected')
             GROUP BY MONTH(o.created_at), DATE_FORMAT(o.created_at, '%b')

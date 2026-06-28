@@ -139,7 +139,7 @@ try {
     // PHP MYSQL EXECUTION
     try {
         if ($intent === "Stock Check" && $medicineName) {
-            $stmt = $db->prepare("SELECT stock FROM medicines WHERE name LIKE :name");
+            $stmt = $db->prepare("SELECT i.stock FROM products p JOIN inventory i ON p.id = i.product_id WHERE p.name LIKE :name");
             $stmt->execute(['name' => '%' . $medicineName . '%']);
             $dbResult = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } 

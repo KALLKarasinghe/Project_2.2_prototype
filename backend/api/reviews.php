@@ -18,8 +18,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $stmt = $db->prepare("INSERT INTO reviews (reviewer_id, target_id, rating, comment) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$reviewer_id, $target_id, $rating, $comment]);
+        // Fetch the user's name since the product_reviews table stores 'reviewer' as a string
+        $userStmt = $db->prepare("SELECT name FROM users WHERE id = ?");
+        $userStmt->execute([$reviewer_id]);
+        $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+        $reviewer_name = $user ? $user['name'] : 'Anonymous User';
+
+        $stmt = $db->prepare("INSERT INTO product_reviews (product_id, reviewer, rating, comment, review_date) VALUES (?, ?, ?, ?, CURDATE())");
+        $stmt->execute([$target_id, $reviewer_name, $rating, $comment]);
         echo json_encode(["success" => true, "message" => "Review submitted successfully!"]);
     } catch (PDOException $e) {
         http_response_code(500);
@@ -33,7 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     try {
-        $stmt = $db->prepare("SELECT r.*, u.name as reviewer_name FROM reviews r JOIN users u ON r.reviewer_id = u.id WHERE r.target_id = ? ORDER BY r.created_at DESC");
+        // Return 'reviewer_name' to match frontend expectations
+        $stmt = $db->prepare("SELECT id, product_id as target_id, reviewer as reviewer_name, rating, comment, created_at FROM product_reviews WHERE product_id = ? ORDER BY created_at DESC");
         $stmt->execute([$target_id]);
         echo json_encode(["success" => true, "data" => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
     } catch (PDOException $e) {
