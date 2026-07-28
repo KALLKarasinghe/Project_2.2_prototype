@@ -59,7 +59,7 @@ const Navbar = () => {
         <div className="flex items-center gap-3">
           <Link to="/special-medicine" className="hover:text-blue-200 cursor-pointer transition-colors">Special Medicine</Link>
           <span className="opacity-40">|</span>
-          <span className="hover:text-blue-200 cursor-pointer transition-colors">Help Center</span>
+          <Link to="/help-center" className="hover:text-blue-200 cursor-pointer transition-colors">Help Center</Link>
         </div>
       </div>
 

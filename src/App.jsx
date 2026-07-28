@@ -16,6 +16,7 @@ import Products from './Products';
 import SuppliersList from './SuppliersList';
 import About from './About';
 import SpecialMedicine from './SpecialMedicine';
+import HelpCenter from './HelpCenter';
 import MyOrders from './MyOrders';
 
 import { Toaster } from 'react-hot-toast';
@@ -34,6 +35,7 @@ function App() {
             <Route path="/suppliers" element={<SuppliersList />} />
             <Route path="/about" element={<About />} />
             <Route path="/special-medicine" element={<SpecialMedicine />} />
+            <Route path="/help-center" element={<HelpCenter />} />
             <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/admin-login" element={<AdminLogin />} />
