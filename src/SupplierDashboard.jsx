@@ -6,6 +6,7 @@ import SupplierAnalytics from './SupplierAnalytics';
 import OrderChatModal from './OrderChatModal';
 import SupplierWallet from './SupplierWallet';
 import ProfileSettings from './ProfileSettings';
+import Navbar from './Navbar';
 
 export default function SupplierDashboard() {
   const navigate = useNavigate();
@@ -269,10 +270,13 @@ export default function SupplierDashboard() {
   );
 
   return (
-    <div className="flex font-sans bg-slate-50 min-h-screen print:bg-white">
-      
+    <div className="flex flex-col h-screen font-sans bg-slate-50 print:bg-white overflow-hidden">
+      <div className="print:hidden">
+        <Navbar />
+      </div>
+      <div className="flex flex-1 overflow-hidden relative">
       {/* side bar*/}
-      <div className="w-65 bg-indigo-950 flex flex-col justify-between px-5 py-6 fixed h-screen z-10 text-white print:hidden">
+      <div className="w-65 bg-indigo-950 flex flex-col justify-between px-5 py-6 sticky top-0 h-full z-10 text-white print:hidden overflow-y-auto">
         <div>
           <h2 className="font-inter text-lg text-white font-black tracking-normal">Company Portal</h2>
           <p className="text-emerald-400 text-sm font-bold m-0">{currentUser?.name || 'Global Medicine'}</p>
@@ -304,7 +308,7 @@ export default function SupplierDashboard() {
       </div>
 
       {/*main content */}
-      <div className="flex-1 py-10 pl-10 pr-24 ml-65 print:ml-0 print:p-0 relative">
+      <div className="flex-1 overflow-y-auto py-10 pl-10 pr-24 max-w-full print:p-0 relative">
         
         {/* inventory tab */}
         {activeTab === 'inventory' && (
@@ -789,6 +793,7 @@ export default function SupplierDashboard() {
         order={selectedOrderForChat}
         currentUser={currentUser}
       />
+      </div>
     </div>
   );
 }

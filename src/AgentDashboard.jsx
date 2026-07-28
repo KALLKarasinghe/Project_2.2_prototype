@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSystemStore } from './SystemContext';
 import toast from 'react-hot-toast';
 import ProfileSettings from './ProfileSettings';
+import Navbar from './Navbar';
 
 const EmptyState = ({ icon, title, description }) => (
   <div className="text-center py-16">
@@ -92,10 +93,14 @@ const AgentDashboard = () => {
   );
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
-      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setSidebarOpen(false)} />}
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-slate-50 relative">
+    <div className="flex flex-col h-screen bg-slate-50 font-sans overflow-hidden">
+      <div className="print:hidden">
+        <Navbar />
+      </div>
+      <div className="flex flex-1 overflow-hidden relative">
+        {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setSidebarOpen(false)} />}
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto bg-slate-50 relative">
         <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="text-slate-600"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
@@ -254,7 +259,8 @@ const AgentDashboard = () => {
             </div>
           )}
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

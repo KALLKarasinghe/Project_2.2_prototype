@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSystemStore } from './SystemContext';
 import NotificationBell from './NotificationBell';
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser, logoutUser, toggleCart, cart } = useSystemStore();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -81,10 +82,10 @@ const Navbar = () => {
         <div className="flex gap-4 items-center">
           {/* Navigation Links */}
           <nav className="hidden md:flex gap-6 items-center font-medium text-slate-600">
-            <Link to="/" className="hover:text-blue-600 transition-colors">Home</Link>
-            <Link to="/products" className="hover:text-blue-600 transition-colors">Products</Link>
-            <Link to="/suppliers" className="hover:text-blue-600 transition-colors">Suppliers</Link>
-            <Link to="/about" className="hover:text-blue-600 transition-colors">About Us</Link>
+            <Link to="/" className={`hover:text-blue-600 transition-colors ${location.pathname === '/' ? 'text-blue-600 font-bold' : ''}`}>Home</Link>
+            <Link to="/products" className={`hover:text-blue-600 transition-colors ${location.pathname === '/products' ? 'text-blue-600 font-bold' : ''}`}>Products</Link>
+            <Link to="/suppliers" className={`hover:text-blue-600 transition-colors ${location.pathname === '/suppliers' ? 'text-blue-600 font-bold' : ''}`}>Suppliers</Link>
+            <Link to="/about" className={`hover:text-blue-600 transition-colors ${location.pathname === '/about' ? 'text-blue-600 font-bold' : ''}`}>About Us</Link>
           </nav>
 
           {/* Divider */}

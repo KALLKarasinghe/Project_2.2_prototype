@@ -1,31 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Navbar from './Navbar';
 
 const About = () => {
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
-      {/* Header */}
-      <header className="bg-white sticky top-0 z-40 border-b border-slate-100 shadow-sm flex-shrink-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link to="/" className="flex items-center">
-            <img
-              src={`${import.meta.env.BASE_URL}logo.png`}
-              alt="Global Medicine Logo"
-              className="h-14 md:h-16 w-auto object-contain"
-            />
-            <div className="flex flex-col ml-3 leading-tight">
-              <span className="font-extrabold text-2xl md:text-3xl text-blue-900 tracking-tight">Global Medicine</span>
-              <span className="font-semibold text-[10px] md:text-xs text-gray-500 tracking-widest uppercase mt-0.5">Healthcare Supply Chain</span>
-            </div>
-          </Link>
-          <nav className="hidden md:flex gap-6 items-center font-medium text-slate-600">
-            <Link to="/" className="hover:text-blue-600 transition-colors">Home</Link>
-            <Link to="/products" className="hover:text-blue-600 transition-colors">Products</Link>
-            <Link to="/suppliers" className="hover:text-blue-600 transition-colors">Suppliers</Link>
-            <Link to="/about" className="text-blue-600 font-bold transition-colors">About Us</Link>
-          </nav>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Content */}
       <main className="flex-1 w-full flex flex-col">
