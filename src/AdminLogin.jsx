@@ -37,6 +37,34 @@ const AdminLogin = () => {
     }
   };
 
+  // determine class for username input
+  let usernameClass = "w-full bg-slate-950 border text-white rounded-xl px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all placeholder-slate-600 ";
+  if (errors.adminUsername) {
+    usernameClass += "border-red-500";
+  } else {
+    usernameClass += "border-slate-800";
+  }
+
+  // show username error if any
+  let usernameError = null;
+  if (errors.adminUsername) {
+    usernameError = <p className="text-red-400 text-xs mt-1.5 font-semibold">{errors.adminUsername}</p>;
+  }
+
+  // determine class for password input
+  let passwordClass = "w-full bg-slate-950 border text-white rounded-xl px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all placeholder-slate-600 ";
+  if (errors.password) {
+    passwordClass += "border-red-500";
+  } else {
+    passwordClass += "border-slate-800";
+  }
+
+  // show password error if any
+  let passwordError = null;
+  if (errors.password) {
+    passwordError = <p className="text-red-400 text-xs mt-1.5 font-semibold">{errors.password}</p>;
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 relative font-sans text-slate-200">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -46,10 +74,8 @@ const AdminLogin = () => {
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 text-rose-500 mb-6 shadow-2xl">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-            </svg>
+          <div className="inline-flex items-center justify-center mb-6">
+            <img src="/logo.png" alt="Global Medicine Logo" className="w-24 h-24 object-contain drop-shadow-2xl opacity-90 brightness-200" />
           </div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight">System Access</h1>
           <p className="text-slate-400 font-medium mt-2">Restricted Administrator Portal</p>
@@ -64,14 +90,14 @@ const AdminLogin = () => {
                   type="text"
                   value={adminUsername}
                   onChange={(e) => { setAdminUsername(e.target.value); setErrors(p => ({ ...p, adminUsername: '' })); }}
-                  className={`w-full bg-slate-950 border text-white rounded-xl px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all placeholder-slate-600 ${errors.adminUsername ? 'border-red-500' : 'border-slate-800'}`}
+                  className={usernameClass}
                   placeholder="e.g. Linuka"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                 </div>
               </div>
-              {errors.adminUsername && <p className="text-red-400 text-xs mt-1.5 font-semibold">{errors.adminUsername}</p>}
+              {usernameError}
             </div>
 
             <div>
@@ -81,14 +107,14 @@ const AdminLogin = () => {
                   type="password"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setErrors(p => ({ ...p, password: '' })); }}
-                  className={`w-full bg-slate-950 border text-white rounded-xl px-4 py-3 pl-10 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all placeholder-slate-600 ${errors.password ? 'border-red-500' : 'border-slate-800'}`}
+                  className={passwordClass}
                   placeholder="••••••••••••"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                 </div>
               </div>
-              {errors.password && <p className="text-red-400 text-xs mt-1.5 font-semibold">{errors.password}</p>}
+              {passwordError}
             </div>
 
             <button type="submit" className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl px-4 py-3.5 shadow-md shadow-rose-900/50 transform hover:-translate-y-0.5 transition-all active:scale-95 mt-2 border border-rose-500">

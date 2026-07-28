@@ -6,7 +6,7 @@ import Navbar from './Navbar';
 import toast from 'react-hot-toast';
 
 const Products = () => {
-  const { medicines, currentUser, addReview, addToCart } = useSystemStore();
+  const { medicines, currentUser, addReview, addToCart, searchMedicines } = useSystemStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedMedicine, setSelectedMedicine] = useState(null);
@@ -18,8 +18,7 @@ const Products = () => {
     setCurrentPage(1);
   }, [searchTerm, selectedBrands]);
 
-  const uniqueBrands = [...new Set(medicines.map(item => item.brand).filter(Boolean))].sort();
-
+  // filter brands based on selection
   const toggleBrand = (brand) => {
     setSelectedBrands(prev =>
       prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]
@@ -31,15 +30,20 @@ const Products = () => {
   const [hover, setHover] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
 
+  // handle review form submission
   const handleReviewSubmit = (e) => {
     e.preventDefault();
+    
+    // check if comment is empty or user is not logged in
     if (!reviewComment.trim() || !currentUser) return;
+    
     const newReview = {
       reviewer: currentUser.name,
       rating: parseInt(rating),
       comment: reviewComment,
       date: new Date().toISOString().split('T')[0]
     };
+    
     addReview(selectedMedicine.id, newReview);
     setSelectedMedicine({...selectedMedicine, reviews: [newReview, ...(selectedMedicine.reviews || [])]});
     setReviewComment('');
@@ -47,21 +51,33 @@ const Products = () => {
     setHover(0);
   };
 
-  // Step 1: Filter by search text only
-  const searchedMedicines = medicines.filter(med =>
-    (med.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (med.brand || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (med.description && med.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const [searchedMedicines, setSearchedMedicines] = useState([]);
 
-  // Step 2: Derive available brands dynamically from search results
+  // search for medicines when search term changes
+  useEffect(() => {
+    if (!searchTerm) {
+      setSearchedMedicines(medicines);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      const results = await searchMedicines(searchTerm);
+      setSearchedMedicines(results);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm, medicines, searchMedicines]);
+
+  // get available brands from search results
   const availableBrands = [...new Set(searchedMedicines.map(item => item.brand).filter(Boolean))].sort();
 
-  // Step 3: Final filter - apply brand checkboxes on top of search results
-  const finalDisplayedMedicines = selectedBrands.length === 0
-    ? searchedMedicines
-    : searchedMedicines.filter(med => selectedBrands.includes(med.brand));
+  // filter by brand
+  let finalDisplayedMedicines = [];
+  if (selectedBrands.length === 0) {
+    finalDisplayedMedicines = searchedMedicines;
+  } else {
+    finalDisplayedMedicines = searchedMedicines.filter(med => selectedBrands.includes(med.brand));
+  }
 
+  // pagination logic
   const totalPages = Math.ceil(finalDisplayedMedicines.length / itemsPerPage);
   const currentMedicines = finalDisplayedMedicines.slice(
     (currentPage - 1) * itemsPerPage,

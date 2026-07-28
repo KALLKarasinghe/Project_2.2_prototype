@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useSystemStore } from './SystemContext';
 import toast from 'react-hot-toast';
 import { GoogleGenAI } from '@google/genai';
+import ProfileSettings from './ProfileSettings';
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
-  const { medicines, specialMedicines, logoutUser } = useSystemStore();
+  const { currentUser, medicines, specialMedicines, logoutUser } = useSystemStore();
   const [activeTab, setActiveTab] = useState('special_request');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reqMedicine, setReqMedicine] = useState('');
@@ -16,6 +17,7 @@ const CustomerDashboard = () => {
 
   const agents = Array.from(new Set(['Global Health Oncology Agents', 'RareMeds Dispatch', 'Specialty Pharma Connect', ...(specialMedicines?.map(m => m.agentName) || [])]));
 
+  // convert uploaded file to base64 for AI processing
   const fileToGenerativePart = async (file) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -31,6 +33,7 @@ const CustomerDashboard = () => {
     });
   };
 
+  // analyze the prescription image using Gemini AI
   const analyzePrescription = async () => {
     if (!reqFile) {
       toast.error('Please upload a prescription first.');
@@ -126,12 +129,45 @@ Respond strictly in JSON format without any markdown wrappers or code blocks:
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setSidebarOpen(false)} />}
       <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-slate-50">
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-10">
-          <button onClick={() => setSidebarOpen(true)} className="text-slate-600"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
-          <span className="font-bold text-slate-800">Patient Portal</span>
+      <main className="flex-1 overflow-y-auto bg-slate-50 relative">
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarOpen(true)} className="text-slate-600">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+            <span className="font-bold text-slate-800">Customer Portal</span>
+          </div>
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className="w-10 h-10 rounded-full overflow-hidden border border-slate-200"
+          >
+            {currentUser?.profile_pic ? (
+              <img src={`http://localhost${currentUser.profile_pic}`} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-sm font-bold text-slate-400 bg-slate-100 w-full h-full flex items-center justify-center">{currentUser?.name?.charAt(0) || 'U'}</span>
+            )}
+          </button>
         </div>
-        <div className="p-6 lg:p-10">
+
+        <div className="p-6 md:p-8 lg:p-10 pr-24 md:pr-24 lg:pr-28 max-w-5xl mx-auto relative">
+          
+          {/* Desktop Top Right Profile Avatar */}
+          <div className="hidden md:block absolute top-8 right-10 z-20">
+            <button 
+              onClick={() => setActiveTab(activeTab === 'profile' ? 'special_request' : 'profile')}
+              className="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-200 hover:border-indigo-500 shadow-md transition-all hover:scale-105 bg-white flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-indigo-500/20"
+              title="My Profile"
+            >
+              {currentUser?.profile_pic ? (
+                <img src={`http://localhost${currentUser.profile_pic}`} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xl font-bold text-slate-400">{currentUser?.name?.charAt(0) || 'U'}</span>
+              )}
+            </button>
+          </div>
+
+          {activeTab === 'profile' && <ProfileSettings />}
           <header className="mb-8">
             <h1 className="text-3xl font-extrabold text-slate-900">Request Specialized Treatment</h1>
             <p className="text-slate-500 mt-1">Submit your prescription securely to our verified Medical Agents.</p>

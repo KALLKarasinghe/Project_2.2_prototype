@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSystemStore } from './SystemContext';
 import toast from 'react-hot-toast';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import ProfileSettings from './ProfileSettings';
 
 // Reusable empty state component
 const EmptyState = ({ icon, title, description }) => (
@@ -17,7 +18,7 @@ const EmptyState = ({ icon, title, description }) => (
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { users, pendingUsers, orders, medicines, approveUser, deleteUser, logoutUser } = useSystemStore();
+  const { users, currentUser, pendingUsers, orders, medicines, approveUser, deleteUser, logoutUser } = useSystemStore();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [adminVerifyUsers, setAdminVerifyUsers] = useState([]);
@@ -44,6 +45,7 @@ const AdminDashboard = () => {
   const [logsPage, setLogsPage] = useState(1);
   const LOGS_PER_PAGE = 20;
 
+  // fetch users needing verification
   const fetchPendingVerifications = async () => {
     try {
       const res = await fetch('http://localhost/pharma_backend/api/admin_verify.php');
@@ -56,6 +58,7 @@ const AdminDashboard = () => {
     }
   };
 
+  // get basic system stats
   const fetchStats = async () => {
     try {
       const res = await fetch('http://localhost/pharma_backend/api/admin_stats.php');
@@ -222,6 +225,19 @@ const AdminDashboard = () => {
     </aside>
   );
 
+  // helper to get document display
+  const renderUserDocument = (user) => {
+    if (user.license_file_path) {
+      return <a href={`http://localhost/pharma_backend/uploads/${user.license_file_path}`} target="_blank" rel="noreferrer" className="text-blue-600 font-semibold hover:underline bg-blue-50 px-2 py-1 rounded">View License</a>;
+    } else if (user.br_number) {
+      return <span className="font-mono text-slate-700">BR: {user.br_number}</span>;
+    } else if (user.license_no) {
+      return <span className="font-mono text-slate-700">Lic: {user.license_no}</span>;
+    } else {
+      return <span className="italic text-slate-400">No document</span>;
+    }
+  };
+
   // Filter and paginate users
   const filteredUsers = users.filter(user => 
     user.name?.toLowerCase().includes(userSearchQuery.toLowerCase()) || 
@@ -242,14 +258,44 @@ const AdminDashboard = () => {
 
       <main className="flex-1 overflow-y-auto bg-slate-50">
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-10">
-          <button onClick={() => setSidebarOpen(true)} className="text-slate-600">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+        <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarOpen(true)} className="text-slate-600">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+            <span className="font-bold text-slate-800">Admin Portal</span>
+          </div>
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className="w-10 h-10 rounded-full overflow-hidden border border-slate-200"
+          >
+            {currentUser?.profile_pic ? (
+              <img src={`http://localhost${currentUser.profile_pic}`} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-sm font-bold text-slate-400 bg-slate-100 w-full h-full flex items-center justify-center">{currentUser?.name?.charAt(0) || 'U'}</span>
+            )}
           </button>
-          <span className="font-bold text-slate-800">Admin Portal</span>
         </div>
 
-        <div className="p-6 lg:p-10">
+        <div className="p-6 md:p-8 lg:p-10 pr-24 md:pr-24 lg:pr-28 max-w-7xl mx-auto relative">
+          
+          {/* Desktop Top Right Profile Avatar */}
+          <div className="hidden md:block absolute top-8 right-10 z-20">
+            <button 
+              onClick={() => setActiveTab(activeTab === 'profile' ? 'dashboard' : 'profile')}
+              className="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-200 hover:border-indigo-500 shadow-md transition-all hover:scale-105 bg-white flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-indigo-500/20"
+              title="My Profile"
+            >
+              {currentUser?.profile_pic ? (
+                <img src={`http://localhost${currentUser.profile_pic}`} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xl font-bold text-slate-400">{currentUser?.name?.charAt(0) || 'U'}</span>
+              )}
+            </button>
+          </div>
+
+          {activeTab === 'profile' && <ProfileSettings />}
+
           <header className="mb-8">
             <h1 className="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
               {activeTab === 'dashboard' && 'System Dashboard'}
@@ -383,15 +429,7 @@ const AdminDashboard = () => {
                             </td>
                             <td className="px-6 py-4"><span className="bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-lg text-xs border border-blue-100">{user.role}</span></td>
                             <td className="px-6 py-4 text-sm text-slate-500">
-                              {user.license_file_path ? (
-                                <a href={`http://localhost/pharma_backend/uploads/${user.license_file_path}`} target="_blank" rel="noreferrer" className="text-blue-600 font-semibold hover:underline bg-blue-50 px-2 py-1 rounded">View License</a>
-                              ) : user.br_number ? (
-                                <span className="font-mono text-slate-700">BR: {user.br_number}</span>
-                              ) : user.license_no ? (
-                                <span className="font-mono text-slate-700">Lic: {user.license_no}</span>
-                              ) : (
-                                <span className="italic text-slate-400">No document</span>
-                              )}
+                              {renderUserDocument(user)}
                             </td>
                             <td className="px-6 py-4 text-right space-x-2">
                               <button onClick={() => handleVerifyAction(user.user_id, 'approve', user.name)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-xs transition-all active:scale-95 shadow-sm">Approve</button>

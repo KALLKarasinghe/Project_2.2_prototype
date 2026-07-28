@@ -3,10 +3,16 @@ import { useSystemStore } from './SystemContext';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import CartSidebar from './CartSidebar';
+import BillModal from './BillModal';
+import ProfileSettings from './ProfileSettings';
 
 const PharmacyDashboard = () => {
   const { currentUser, orders, updateOrderStatus } = useSystemStore();
   const navigate = useNavigate();
+
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [billModalOpen, setBillModalOpen] = useState(false);
+  const [selectedOrderForBill, setSelectedOrderForBill] = useState(null);
 
   // Calculate metrics
   const totalOrders = orders.length;
@@ -26,10 +32,23 @@ const PharmacyDashboard = () => {
     }
   };
 
+  // cancel an order if it's pending
   const handleCancel = async (orderId) => {
     if (window.confirm('Are you sure you want to cancel this order?')) {
       await updateOrderStatus(orderId, 'cancelled');
     }
+  };
+
+  // generate display text for order items
+  const renderOrderItems = (items) => {
+    if (!items || items.length === 0) return 'N/A';
+    
+    let text = `${items[0].generic_name} x${items[0].quantity}`;
+    if (items.length > 1) {
+      text += ` + ${items.length - 1} more`;
+    }
+    
+    return <span>{items[0].generic_name} <span className="text-slate-400 text-xs">x{items[0].quantity}</span> {items.length > 1 && `+ ${items.length - 1} more`}</span>;
   };
 
   return (
@@ -37,8 +56,8 @@ const PharmacyDashboard = () => {
       <Navbar />
       <CartSidebar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pr-24 lg:pr-28 relative">
+        <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 relative">
           <div>
             <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Pharmacy Portal</h1>
             <p className="text-slate-500 font-medium mt-1">Manage your orders and business metrics.</p>
@@ -51,9 +70,28 @@ const PharmacyDashboard = () => {
               Detailed Orders
             </Link>
           </div>
+
+          {/* Top Right Profile Avatar */}
+          <div className="absolute top-0 right-0 z-20">
+            <button 
+              onClick={() => setActiveTab(activeTab === 'profile' ? 'dashboard' : 'profile')}
+              className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-200 hover:border-blue-500 shadow-md transition-all hover:scale-105 bg-white flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-blue-500/20"
+              title="My Profile"
+            >
+              {currentUser?.profile_pic ? (
+                <img src={`http://localhost${currentUser.profile_pic}`} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xl font-bold text-slate-400">{currentUser?.name?.charAt(0) || 'U'}</span>
+              )}
+            </button>
+          </div>
         </header>
 
-        {/* Overview Cards */}
+        {activeTab === 'profile' ? (
+          <ProfileSettings />
+        ) : (
+          <>
+            {/* Overview Cards */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
             <div className="flex items-center justify-between mb-4">
@@ -125,9 +163,7 @@ const PharmacyDashboard = () => {
                       <td className="px-6 py-4 text-sm text-slate-600">{new Date(order.created_at).toLocaleDateString()}</td>
                       <td className="px-6 py-4 font-semibold text-slate-700">{order.company_name}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">
-                        {order.items?.length > 0 ? (
-                            <span>{order.items[0].generic_name} <span className="text-slate-400 text-xs">x{order.items[0].quantity}</span> {order.items.length > 1 && `+ ${order.items.length - 1} more`}</span>
-                        ) : 'N/A'}
+                        {renderOrderItems(order.items)}
                       </td>
                       <td className="px-6 py-4 font-bold text-slate-900">Rs. {Number(order.total_amount).toFixed(2)}</td>
                       <td className="px-6 py-4">
@@ -141,6 +177,12 @@ const PharmacyDashboard = () => {
                             Cancel
                           </button>
                         )}
+                        <button 
+                          onClick={() => { setSelectedOrderForBill(order); setBillModalOpen(true); }}
+                          className="text-emerald-600 hover:text-emerald-800 font-semibold text-sm transition-colors mr-3 hover:underline"
+                        >
+                          Bill
+                        </button>
                         <Link to="/my-orders" className="text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors hover:underline">
                           View
                         </Link>
@@ -152,8 +194,17 @@ const PharmacyDashboard = () => {
             )}
           </div>
         </section>
+        </>
+        )}
 
       </main>
+
+      <BillModal
+        isOpen={billModalOpen}
+        onClose={() => { setBillModalOpen(false); setSelectedOrderForBill(null); }}
+        order={selectedOrderForBill}
+        currentUser={currentUser}
+      />
     </div>
   );
 };

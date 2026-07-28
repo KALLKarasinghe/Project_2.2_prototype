@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSystemStore } from './SystemContext';
 
+// Protects routes from unauthorized access
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { currentUser } = useSystemStore();
 

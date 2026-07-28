@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const SystemContext = createContext();
 
@@ -39,10 +39,13 @@ export const SystemProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Derived cart total
-  const cartTotal = useMemo(() => {
-    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  }, [cart]);
+  // Derived cart total (simple loop)
+  let cartTotal = 0;
+  if (cart && cart.length > 0) {
+    cart.forEach(item => {
+      cartTotal += (item.price * item.quantity);
+    });
+  }
 
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('currentUser');
@@ -52,7 +55,11 @@ export const SystemProvider = ({ children }) => {
   // ─── Fetch helpers (wrapped in useCallback) ─────────────
   const fetchMedicines = useCallback(async () => {
     try {
-      const res = await api('products.php');
+      let url = 'products.php';
+      if (currentUser?.role) {
+          url += `?role=${currentUser.role}`;
+      }
+      const res = await api(url);
       const items = res.data || res;
       // Backend now returns columns aliased to match frontend expectations
       const mapped = (Array.isArray(items) ? items : []).map(med => ({
@@ -70,7 +77,7 @@ export const SystemProvider = ({ children }) => {
     } catch (err) {
       console.error('Failed to fetch medicines:', err);
     }
-  }, []);
+  }, [currentUser]);
 
   const fetchOrders = useCallback(async () => {
     if (!currentUser?.id) {
@@ -394,6 +401,40 @@ export const SystemProvider = ({ children }) => {
 
   const toggleCart = () => setIsCartOpen(prev => !prev);
 
+  // ─── Search Medicines (Database-backed) ───────────────────
+  const searchMedicines = useCallback(async (searchTerm) => {
+    try {
+      let url = 'products.php';
+      if (searchTerm) {
+        url += `?search=${encodeURIComponent(searchTerm)}`;
+      }
+      if (currentUser?.role) {
+          url += (url.includes('?') ? '&' : '?') + `role=${currentUser.role}`;
+      }
+      const res = await api(url);
+      const items = res.data || res;
+      return (Array.isArray(items) ? items : []).map(med => ({
+        id: med.id,
+        company_id: med.company_id,
+        brand: med.brand,
+        name: med.name,
+        description: med.description,
+        price: med.price,
+        expireDate: med.expireDate,
+        stock: med.stock,
+        company_name: med.company_name
+      }));
+    } catch (err) {
+      console.error('Failed to search medicines:', err);
+      return [];
+    }
+  }, [currentUser]);
+
+  const updateUserContext = (updatedUserData) => {
+    setCurrentUser(updatedUserData);
+    localStorage.setItem('currentUser', JSON.stringify(updatedUserData));
+  };
+
   // ─── Context Value ─────────────────────────────────────
   const value = {
     medicines,
@@ -413,6 +454,7 @@ export const SystemProvider = ({ children }) => {
     currentUser,
     loginUser,
     logoutUser,
+    updateUserContext,
     // Cart
     cart,
     cartTotal,
@@ -426,6 +468,7 @@ export const SystemProvider = ({ children }) => {
     refreshMedicines: fetchMedicines,
     refreshOrders: fetchOrders,
     refreshUsers: fetchUsers,
+    searchMedicines,
   };
 
   return (

@@ -151,117 +151,132 @@ const PaymentModal = ({ total, onClose }) => {
     }
   };
 
+  // setup payment button based on selected method
+  let paymentButton = null;
+  if (paymentMethod === 'PayHere') {
+    paymentButton = (
+      <button
+        onClick={handlePayHere}
+        disabled={processing}
+        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-3"
+      >
+        {processing ? 'Launching PayHere...' : 'Pay with PayHere'}
+      </button>
+    );
+  } else {
+    paymentButton = (
+      <button
+        onClick={handleBankTransferSubmit}
+        disabled={processing}
+        className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-3"
+      >
+        {processing ? 'Submitting...' : 'Submit Order'}
+      </button>
+    );
+  }
+
+  // generate modal content
+  let modalContent = null;
+  if (success) {
+    modalContent = (
+      <div className="p-8 text-center">
+        <div className="w-24 h-24 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-6 relative">
+          <div className="absolute inset-0 rounded-full bg-emerald-100 animate-ping opacity-30" />
+          <svg className="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" 
+              style={{ strokeDasharray: 30, strokeDashoffset: 0, animation: 'draw-check 0.5s ease-out forwards' }} 
+            />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 mb-2">Order Successful!</h2>
+        <p className="text-slate-500 mb-6">Your order has been placed and is being processed.</p>
+        
+        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 mb-6">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Order ID</p>
+          <p className="text-xl font-black text-blue-600 tracking-wide font-mono">{orderId}</p>
+        </div>
+
+        <button
+          onClick={() => { onClose(); navigate('/'); }}
+          className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+        >
+          Return to Dashboard
+        </button>
+      </div>
+    );
+  } else {
+    modalContent = (
+      <>
+        <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-white font-bold text-lg">Secure Checkout</h2>
+            </div>
+          </div>
+          <button onClick={onClose} disabled={processing} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100 mb-5 relative overflow-hidden">
+            <div className="flex justify-between items-center pt-1">
+              <span className="text-sm font-bold text-blue-800">Total Amount</span>
+              <span className="text-2xl font-black text-blue-900">Rs. {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+
+          {/* Payment Method Selection */}
+          <div className="mb-5">
+            <label className="block text-sm font-bold text-slate-700 mb-2">Payment Method</label>
+            <select 
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            >
+              <option value="PayHere">PayHere (Credit/Debit Card)</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+          </div>
+
+          {paymentMethod === 'Bank Transfer' && (
+            <div className="mb-5 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <p className="text-sm text-slate-600 mb-3">Please transfer the total amount to Account No: <strong>1234-5678-9012</strong> (BOC, City Branch) and upload the receipt.</p>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleReceiptUpload} 
+                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {receiptImage && <img src={receiptImage} alt="Receipt Preview" className="mt-3 h-20 object-cover rounded-lg border border-slate-200" />}
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-5 flex items-center gap-2">
+              <p className="text-red-700 text-sm font-medium">{error}</p>
+            </div>
+          )}
+
+          {paymentButton}
+        </div>
+      </>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={!processing && !success ? onClose : undefined} />
 
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-        
-        {success ? (
-          <div className="p-8 text-center">
-            <div className="w-24 h-24 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-6 relative">
-              <div className="absolute inset-0 rounded-full bg-emerald-100 animate-ping opacity-30" />
-              <svg className="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" 
-                  style={{ strokeDasharray: 30, strokeDashoffset: 0, animation: 'draw-check 0.5s ease-out forwards' }} 
-                />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-black text-slate-900 mb-2">Order Successful!</h2>
-            <p className="text-slate-500 mb-6">Your order has been placed and is being processed.</p>
-            
-            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 mb-6">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Order ID</p>
-              <p className="text-xl font-black text-blue-600 tracking-wide font-mono">{orderId}</p>
-            </div>
-
-            <button
-              onClick={() => { onClose(); navigate('/'); }}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
-            >
-              Return to Dashboard
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-5 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-white font-bold text-lg">Secure Checkout</h2>
-                </div>
-              </div>
-              <button onClick={onClose} disabled={processing} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="p-6">
-              <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100 mb-5 relative overflow-hidden">
-                <div className="flex justify-between items-center pt-1">
-                  <span className="text-sm font-bold text-blue-800">Total Amount</span>
-                  <span className="text-2xl font-black text-blue-900">Rs. {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                </div>
-              </div>
-
-              {/* Payment Method Selection */}
-              <div className="mb-5">
-                <label className="block text-sm font-bold text-slate-700 mb-2">Payment Method</label>
-                <select 
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                >
-                  <option value="PayHere">PayHere (Credit/Debit Card)</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                </select>
-              </div>
-
-              {paymentMethod === 'Bank Transfer' && (
-                <div className="mb-5 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                  <p className="text-sm text-slate-600 mb-3">Please transfer the total amount to Account No: <strong>1234-5678-9012</strong> (BOC, City Branch) and upload the receipt.</p>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleReceiptUpload} 
-                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  />
-                  {receiptImage && <img src={receiptImage} alt="Receipt Preview" className="mt-3 h-20 object-cover rounded-lg border border-slate-200" />}
-                </div>
-              )}
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-5 flex items-center gap-2">
-                  <p className="text-red-700 text-sm font-medium">{error}</p>
-                </div>
-              )}
-
-              {paymentMethod === 'PayHere' ? (
-                <button
-                  onClick={handlePayHere}
-                  disabled={processing}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-3"
-                >
-                  {processing ? 'Launching PayHere...' : 'Pay with PayHere'}
-                </button>
-              ) : (
-                <button
-                  onClick={handleBankTransferSubmit}
-                  disabled={processing}
-                  className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-3"
-                >
-                  {processing ? 'Submitting...' : 'Submit Order'}
-                </button>
-              )}
-            </div>
-          </>
-        )}
+        {modalContent}
       </div>
       <style>{`@keyframes draw-check { from { stroke-dashoffset: 30; } to { stroke-dashoffset: 0; } }`}</style>
     </div>

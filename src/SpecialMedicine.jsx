@@ -5,6 +5,37 @@ import { Link } from 'react-router-dom';
 const SpecialMedicine = () => {
   const { specialMedicines } = useSystemStore();
   const [selectedAgent, setSelectedAgent] = useState(null);
+  // extract medicine items to show
+  let medicineItems;
+  if (specialMedicines && specialMedicines.length > 0) {
+    medicineItems = specialMedicines.map((medicine) => (
+      <div key={medicine.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+        <div className="flex-1">
+          <div className="flex justify-between items-start mb-4">
+            <span className="bg-rose-50 text-rose-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Critical Care</span>
+          </div>
+          <h3 className="text-2xl font-bold text-slate-900 mb-2">{medicine.name}</h3>
+          <p className="text-slate-600 text-sm font-medium mb-6 flex items-start gap-2">
+            <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+            <span>{medicine.usedFor}</span>
+          </p>
+        </div>
+        
+        <button 
+          onClick={() => setSelectedAgent(medicine)}
+          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors mt-auto"
+        >
+          View Agent Contact
+        </button>
+      </div>
+    ));
+  } else {
+    medicineItems = (
+      <div className="col-span-full text-center py-12 text-slate-500">
+        No critical care medicines listed at this moment.
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
@@ -47,33 +78,7 @@ const SpecialMedicine = () => {
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {specialMedicines && specialMedicines.length > 0 ? (
-            specialMedicines.map((medicine) => (
-              <div key={medicine.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
-                <div className="flex-1">
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="bg-rose-50 text-rose-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Critical Care</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-2">{medicine.name}</h3>
-                  <p className="text-slate-600 text-sm font-medium mb-6 flex items-start gap-2">
-                    <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                    <span>{medicine.usedFor}</span>
-                  </p>
-                </div>
-                
-                <button 
-                  onClick={() => setSelectedAgent(medicine)}
-                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors mt-auto"
-                >
-                  View Agent Contact
-                </button>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12 text-slate-500">
-              No critical care medicines listed at this moment.
-            </div>
-          )}
+          {medicineItems}
         </div>
       </main>
 

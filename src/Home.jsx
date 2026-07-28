@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSystemStore } from './SystemContext';
 import CartSidebar from './CartSidebar';
@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { medicines, users, currentUser, addReview, addToCart, cart } = useSystemStore();
+  const { medicines, users, currentUser, addReview, addToCart, cart, searchMedicines } = useSystemStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedBrands, setSelectedBrands] = useState([]);
@@ -52,31 +52,49 @@ const Home = () => {
     setSelectedBrands([]);
   };
 
-  const baseSearchResults = useMemo(() => {
-    if (!searchQuery) return [];
-    return medicines.filter((med) =>
-      med.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery, medicines]);
-
-  const uniqueBrands = useMemo(() => {
-    return Array.from(new Set(baseSearchResults.map((med) => med.brand)));
-  }, [baseSearchResults]);
+  const [baseSearchResults, setBaseSearchResults] = useState([]);
 
   useEffect(() => {
-    setSelectedBrands((prev) => prev.filter((brand) => uniqueBrands.includes(brand)));
-  }, [uniqueBrands]);
+    if (!searchQuery) {
+      setBaseSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      const results = await searchMedicines(searchQuery);
+      setBaseSearchResults(results);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchMedicines]);
 
+  // Get all unique brands from our search results
+  let uniqueBrands = [];
+  baseSearchResults.forEach((med) => {
+    if (!uniqueBrands.includes(med.brand)) {
+      uniqueBrands.push(med.brand);
+    }
+  });
+
+  // Make sure selected brands are still in the results
+  useEffect(() => {
+    setSelectedBrands((prev) => prev.filter((brand) => uniqueBrands.includes(brand)));
+  }, [baseSearchResults]);
+
+  // Handle clicking a brand to filter
   const toggleBrand = (brand) => {
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-    );
+    setSelectedBrands((prev) => {
+      if (prev.includes(brand)) {
+        return prev.filter((b) => b !== brand);
+      } else {
+        return [...prev, brand];
+      }
+    });
   };
 
-  const finalFilteredMedicines = useMemo(() => {
-    if (selectedBrands.length === 0) return baseSearchResults;
-    return baseSearchResults.filter((med) => selectedBrands.includes(med.brand));
-  }, [baseSearchResults, selectedBrands]);
+  // Filter medicines by selected brands
+  let finalFilteredMedicines = baseSearchResults;
+  if (selectedBrands.length > 0) {
+    finalFilteredMedicines = baseSearchResults.filter((med) => selectedBrands.includes(med.brand));
+  }
 
   const supplementsCount = medicines ? medicines.filter(m => /vitamin|supplement|calcium/i.test(m.name) || /vitamin|supplement|calcium/i.test(m.description)).length : 0;
   const otcCount = medicines ? medicines.filter(m => /paracetamol|cetirizine|panadol|ibuprofen/i.test(m.name) || /paracetamol|cetirizine|panadol|ibuprofen/i.test(m.description)).length : 0;
