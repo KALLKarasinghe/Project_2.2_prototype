@@ -10,10 +10,16 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   if (!currentUser) {
     // If trying to access admin, redirect to admin login
     if (requiredRole === 'Admin') {
-      return <Navigate to="/admin-login" replace />;
+      return <Navigate to="/admin" replace />;
     }
     // For any other protected route, redirect to standard login
     return <Navigate to="/login" replace />;
+  }
+
+  // Check role authorization if requiredRole is provided
+  if (requiredRole && currentUser.role?.toLowerCase() !== requiredRole.toLowerCase()) {
+    // Redirect to home if user doesn't have the required role
+    return <Navigate to="/" replace />;
   }
 
   // Allow access

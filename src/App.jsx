@@ -38,10 +38,10 @@ function App() {
             <Route path="/help-center" element={<HelpCenter />} />
             <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/login" element={<Auth />} />
-            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminLogin />} />
             
             {/* Protected Routes for different roles */}
-            <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin-dashboard" element={<ProtectedRoute requiredRole="Admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/supplier" element={<ProtectedRoute><SupplierDashboard /></ProtectedRoute>} />
             <Route path="/pharmacy" element={<ProtectedRoute><PharmacyDashboard /></ProtectedRoute>} />
             <Route path="/agent" element={<ProtectedRoute><AgentDashboard /></ProtectedRoute>} />

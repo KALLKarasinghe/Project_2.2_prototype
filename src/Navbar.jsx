@@ -8,7 +8,12 @@ const Navbar = () => {
   const location = useLocation();
   const { currentUser, logoutUser, toggleCart, cart } = useSystemStore();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef(null);
+
+  React.useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   React.useEffect(() => {
     const handleClickOutside = (event) => {
@@ -30,7 +35,7 @@ const Navbar = () => {
   if (currentUser) {
     const role = currentUser.role?.toLowerCase() || '';
     if (role === 'admin') {
-      dashboardLink = '/admin';
+      dashboardLink = '/admin-dashboard';
     } else if (role === 'pharmacy') {
       dashboardLink = '/pharmacy';
     } else if (role === 'customer') {
@@ -57,8 +62,6 @@ const Navbar = () => {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <Link to="/special-medicine" className="hover:text-blue-200 cursor-pointer transition-colors">Special Medicine</Link>
-          <span className="opacity-40">|</span>
           <Link to="/help-center" className="hover:text-blue-200 cursor-pointer transition-colors">Help Center</Link>
         </div>
       </div>
@@ -79,12 +82,13 @@ const Navbar = () => {
         </Link>
 
         {/* Right Section */}
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-2 sm:gap-4 items-center">
           {/* Navigation Links */}
           <nav className="hidden md:flex gap-6 items-center font-medium text-slate-600">
             <Link to="/" className={`hover:text-blue-600 transition-colors ${location.pathname === '/' ? 'text-blue-600 font-bold' : ''}`}>Home</Link>
             <Link to="/products" className={`hover:text-blue-600 transition-colors ${location.pathname === '/products' ? 'text-blue-600 font-bold' : ''}`}>Products</Link>
             <Link to="/suppliers" className={`hover:text-blue-600 transition-colors ${location.pathname === '/suppliers' ? 'text-blue-600 font-bold' : ''}`}>Suppliers</Link>
+            <Link to="/special-medicine" className={`hover:text-blue-600 transition-colors ${location.pathname === '/special-medicine' ? 'text-blue-600 font-bold' : ''}`}>Special Medicine</Link>
             <Link to="/about" className={`hover:text-blue-600 transition-colors ${location.pathname === '/about' ? 'text-blue-600 font-bold' : ''}`}>About Us</Link>
           </nav>
 
@@ -158,13 +162,36 @@ const Navbar = () => {
             /* ─── Logged Out State ────────────────────── */
             <button 
               onClick={() => navigate('/login')}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-md shadow-blue-500/20 transition-all active:scale-95"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold py-1.5 px-3 sm:py-2 sm:px-6 rounded-full shadow-md shadow-blue-500/20 transition-all active:scale-95 whitespace-nowrap"
             >
-              Sign In / Register
+              Sign In
             </button>
           )}
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="md:hidden p-1 text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden absolute top-full left-0 w-full bg-white border-t border-slate-100 shadow-lg py-4 px-6 flex flex-col gap-4 animate-in slide-in-from-top-2 duration-200 z-50">
+          <Link to="/" className={`font-medium ${location.pathname === '/' ? 'text-blue-600 font-bold' : 'text-slate-600'}`}>Home</Link>
+          <Link to="/products" className={`font-medium ${location.pathname === '/products' ? 'text-blue-600 font-bold' : 'text-slate-600'}`}>Products</Link>
+          <Link to="/suppliers" className={`font-medium ${location.pathname === '/suppliers' ? 'text-blue-600 font-bold' : 'text-slate-600'}`}>Suppliers</Link>
+          <Link to="/special-medicine" className={`font-medium ${location.pathname === '/special-medicine' ? 'text-blue-600 font-bold' : 'text-slate-600'}`}>Special Medicine</Link>
+          <Link to="/about" className={`font-medium ${location.pathname === '/about' ? 'text-blue-600 font-bold' : 'text-slate-600'}`}>About Us</Link>
+        </div>
+      )}
     </header>
   );
 };
